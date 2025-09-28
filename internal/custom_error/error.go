@@ -1,0 +1,14 @@
+package custom_error
+
+import (
+	"errors"
+)
+
+var (
+	ErrNotFound          = errors.New("entity not found")
+	ErrIncorrectPassword = errors.New("incorrect password")
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrInvalidAdminToken = errors.New("admin token invalid")
+	ErrInvalidLogin      = errors.New("invalid login")
+	ErrInvalidPassword   = errors.New("invalid password")
+)

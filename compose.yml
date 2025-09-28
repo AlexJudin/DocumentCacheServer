@@ -1,0 +1,46 @@
+services:
+  web:
+    build: .
+    env_file:
+      - config/config.env
+    ports:
+      - "7540:7540"
+    volumes:
+      - .:/usr/src/app
+    command: go run cmd/main.go
+  db:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER : 'user'
+      POSTGRES_PASSWORD : 'password'
+      POSTGRES_DB : 'postgres_db'
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    environment:
+      REDIS_PASSWORD : "password"
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redisdata:/data
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongodb_data:/data/db
+    networks:
+      - mongo-network
+
+volumes:
+  postgres-db:
+  mongodb_data:
+
+networks:
+  mongo-network:
+    driver: bridge
