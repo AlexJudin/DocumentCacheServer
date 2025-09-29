@@ -23,6 +23,8 @@ func NewMongoDBRepo(client *mongo.Client) *MongoDBRepo {
 }
 
 func (r *MongoDBRepo) SaveDocument(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
+	log.Infof("start saving document [%s] to database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -35,10 +37,14 @@ func (r *MongoDBRepo) SaveDocument(ctx context.Context, uuid string, jsonDoc map
 		return err
 	}
 
+	log.Infof("end save document [%s] to database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+
 	return nil
 }
 
 func (r *MongoDBRepo) GetDocumentById(ctx context.Context, uuid string) (map[string]interface{}, error) {
+	log.Infof("start getting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -54,10 +60,14 @@ func (r *MongoDBRepo) GetDocumentById(ctx context.Context, uuid string) (map[str
 		return nil, fmt.Errorf("failed to get document: %+v", err)
 	}
 
+	log.Infof("end getting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+
 	return result, nil
 }
 
 func (r *MongoDBRepo) DeleteDocumentById(ctx context.Context, uuid string) error {
+	log.Infof("start deleting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -67,6 +77,8 @@ func (r *MongoDBRepo) DeleteDocumentById(ctx context.Context, uuid string) error
 		log.Debugf("error delete document by id [%s]: %+v", uuid, err)
 		return err
 	}
+
+	log.Infof("end deleting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
 
 	return nil
 }

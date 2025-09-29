@@ -22,10 +22,10 @@ dk-stop:
 h:
 	@echo "Usage: make [target]"
 	@echo "  target is:"
-	@echo "       dep	- Обновление зависимостей"
-	@echo "    test		- Запуск всех тестов"
-	@echo "  dk-start	- Запуск служб в докер контейнерах (окружения)"
-	@echo "   dk-stop	- Остановка запущенных служб (окружения)"
+	@echo "      dep - Обновление зависимостей"
+	@echo "     test - Запуск всех тестов"
+	@echo " dk-start - Запуск служб в докер контейнерах (окружения)"
+	@echo "  dk-stop - Остановка запущенных служб (окружения)"
 .PHONY: h
 help: h
 .PHONY: help

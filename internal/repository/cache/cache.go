@@ -27,6 +27,8 @@ func NewCacheClientRepo(redisClient *redis.Client) *CacheClientRepo {
 }
 
 func (c *CacheClientRepo) Set(ctx context.Context, key, mime string, data interface{}, isFile bool) error {
+	log.Infof("start set document [%s] to cache", key)
+
 	var (
 		filePath string
 		file     []byte
@@ -71,10 +73,14 @@ func (c *CacheClientRepo) Set(ctx context.Context, key, mime string, data interf
 		return fmt.Errorf("failed to marshal value: %v", err)
 	}
 
+	log.Infof("end set document [%s] to cache", key)
+
 	return c.RedisClient.Set(ctx, key, dataByte, 60*time.Minute).Err()
 }
 
 func (c *CacheClientRepo) Get(ctx context.Context, key string) ([]byte, string, bool) {
+	log.Infof("start get document [%s] from cache", key)
+
 	var fileInfo map[string]interface{}
 
 	data, err := c.RedisClient.Get(ctx, key).Bytes()
@@ -122,9 +128,21 @@ func (c *CacheClientRepo) Get(ctx context.Context, key string) ([]byte, string, 
 		return jsonDoc, mime, true
 	}
 
+	log.Infof("end get document [%s] from cache", key)
+
 	return nil, "", false
 }
 
 func (c *CacheClientRepo) Delete(ctx context.Context, key string) error {
-	return c.RedisClient.Del(ctx, key).Err()
+	log.Infof("start delete document [%s] from cache", key)
+
+	err := c.RedisClient.Del(ctx, key).Err()
+	if err != nil {
+		log.Debugf("failed to delete document: %+v", err)
+		return err
+	}
+
+	log.Infof("end delete document [%s] from cache", key)
+
+	return err
 }

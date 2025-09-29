@@ -27,6 +27,8 @@ func (r *UserRepo) SaveUser(user model.User) error {
 		return err
 	}
 
+	log.Infof("end saving user with login [%s]", user.Login)
+
 	return nil
 }
 
@@ -42,6 +44,8 @@ func (r *UserRepo) GetUserByLogin(login string) (model.User, error) {
 		log.Debugf("error getting user by login [%s]: %+v", login, err)
 		return user, err
 	}
+
+	log.Infof("end getting user by login [%s]", user.Login)
 
 	return user, nil
 }

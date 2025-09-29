@@ -29,6 +29,8 @@ func (r *DocumentRepo) SaveDocument(document *model.MetaDocument) error {
 		return err
 	}
 
+	log.Infof("end save document [%s]", document.Name)
+
 	return nil
 }
 
@@ -49,6 +51,8 @@ func (r *DocumentRepo) GetDocumentsList(req entity.DocumentListRequest) ([]model
 		return nil, err
 	}
 
+	log.Infof("end getting documents list [%s]", req.Login)
+
 	return documents, nil
 }
 
@@ -65,6 +69,8 @@ func (r *DocumentRepo) GetDocumentById(uuid string) (model.MetaDocument, error) 
 		return document, err
 	}
 
+	log.Infof("end getting document by uuid[%s]", uuid)
+
 	return document, nil
 }
 
@@ -78,6 +84,8 @@ func (r *DocumentRepo) DeleteDocumentById(id string) error {
 		log.Debugf("error deleting document by id[%s]: %+v", id, err)
 		return err
 	}
+
+	log.Infof("end deleting document by id[%s]", id)
 
 	return nil
 }
