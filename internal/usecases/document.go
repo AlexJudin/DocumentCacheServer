@@ -3,14 +3,13 @@ package usecases
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 
 	"github.com/google/uuid"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
-	"github.com/AlexJudin/DocumentCacheServer/internal/cache"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
@@ -37,7 +36,9 @@ func NewDocumentUsecase(cfg *config.Сonfig, db postgres.Document, cache cache.C
 }
 
 func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
-	document.Meta.UUID = uuid.New().String()
+	uuidDoc := uuid.New().String()
+
+	document.Meta.UUID = uuidDoc
 
 	if document.Meta.File {
 		filePath, err := t.FileStorage.Create(document)
@@ -45,15 +46,27 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 			return err
 		}
 
+		err = t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, filePath, true)
+		if err != nil {
+			return err
+		}
+
 		document.Meta.FilePath = filePath
 	}
 
-	err := t.MongoDB.SaveDocument(t.Ctx, document.Meta.UUID, document.Json)
-	if err != nil {
-		return err
+	if len(document.Json) != 0 {
+		err := t.MongoDB.SaveDocument(t.Ctx, uuidDoc, document.Json)
+		if err != nil {
+			return err
+		}
+
+		err = t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = t.DB.SaveDocument(document.Meta)
+	err := t.DB.SaveDocument(document.Meta)
 	if err != nil {
 		return err
 	}
@@ -66,6 +79,11 @@ func (t *DocumentUsecase) GetDocumentsList(req entity.DocumentListRequest) ([]mo
 }
 
 func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
+	data, mime, ok := t.Cache.Get(t.Ctx, uuid)
+	if ok {
+		return data, mime, nil
+	}
+
 	metaDoc, err := t.DB.GetDocumentById(uuid)
 	if err != nil {
 		return nil, "", err
@@ -108,23 +126,10 @@ func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
 		return err
 	}
 
+	err = t.Cache.Delete(t.Ctx, uuid)
+	if err != nil {
+		return err
+	}
+
 	return t.DB.DeleteDocumentById(uuid)
-}
-
-func (t *DocumentUsecase) SetCacheValue(ctx context.Context, walletUUID string, balance int64) error {
-	return t.Cache.SetValue(ctx, walletUUID, balance)
-}
-
-func (t *DocumentUsecase) GetCacheValue(ctx context.Context, walletUUID string) (int64, error) {
-	result, err := t.Cache.GetValue(ctx, walletUUID)
-	if err != nil {
-		return 0, err
-	}
-
-	balance, err := strconv.Atoi(result)
-	if err != nil {
-		return 0, err
-	}
-
-	return int64(balance), nil
 }

@@ -1,7 +1,7 @@
 package file_storage
 
 import (
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 )
 
 type FileStorage interface {

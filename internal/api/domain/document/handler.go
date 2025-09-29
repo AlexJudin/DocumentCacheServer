@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/common"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
 
@@ -50,13 +50,17 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	jsonDoc := r.FormValue("json")
 
 	jsonDocMap := make(map[string]interface{})
-	err = json.Unmarshal([]byte(jsonDoc), &jsonDocMap)
-	if err != nil {
-		log.Errorf("save document error: %+v", err)
-		messageError = "Не удалось загрузить json документа."
+	if jsonDoc != "" {
+		err = json.Unmarshal([]byte(jsonDoc), &jsonDocMap)
+		if err != nil {
+			log.Errorf("save document error: %+v", err)
+			messageError = "Не удалось загрузить json документа."
 
-		common.ApiError(http.StatusBadRequest, messageError, w)
-		return
+			common.ApiError(http.StatusBadRequest, messageError, w)
+			return
+		}
+
+		document.Json = jsonDocMap
 	}
 
 	if document.Meta.File {
@@ -75,7 +79,6 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 			Content: file,
 		}
 	}
-	document.Json = jsonDocMap
 
 	err = h.uc.SaveDocument(&document)
 	if err != nil {

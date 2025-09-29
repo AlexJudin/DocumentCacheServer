@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 

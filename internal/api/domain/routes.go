@@ -13,8 +13,7 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain/auth"
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain/document"
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain/register"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/middleware"
-	"github.com/AlexJudin/DocumentCacheServer/internal/cache"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
@@ -50,7 +49,7 @@ func AddRoutes(config *config.Сonfig,
 	authHandler := auth.NewAuthHandler(authUC)
 
 	// init middleware
-	authMiddleware := middleware.NewAuthMiddleware(authService)
+	//authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	r.Post("/api/register", registerHandler.RegisterUser)
 	r.Post("/api/auth", authHandler.AuthorizationUser)
@@ -59,7 +58,7 @@ func AddRoutes(config *config.Сonfig,
 
 	r.Group(func(r chi.Router) {
 		r.Use(httprate.LimitByIP(5000, time.Second))
-		r.Use(authMiddleware.CheckToken)
+		//r.Use(authMiddleware.CheckToken)
 		r.Post("/api/docs", docsHandler.SaveDocument)
 
 		r.Get("/api/docs", docsHandler.GetDocumentsList)

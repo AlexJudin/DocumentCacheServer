@@ -62,14 +62,10 @@ func (r *MongoDBRepo) DeleteDocumentById(ctx context.Context, uuid string) error
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
+	_, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
 	if err != nil {
 		log.Debugf("error delete document by id [%s]: %+v", uuid, err)
 		return err
-	}
-
-	if result.DeletedCount == 0 {
-		return fmt.Errorf("document not found")
 	}
 
 	return nil

@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 )

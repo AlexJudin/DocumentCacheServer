@@ -1,9 +1,8 @@
 package usecases
 
 import (
-	"context"
+	entity "github.com/AlexJudin/DocumentCacheServer/internal/entity"
 
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
@@ -12,9 +11,6 @@ type Document interface {
 	GetDocumentsList(req entity.DocumentListRequest) ([]model.MetaDocument, error)
 	GetDocumentById(uuid string) ([]byte, string, error)
 	DeleteDocumentById(uuid string) error
-
-	SetCacheValue(ctx context.Context, walletUUID string, balance int64) error
-	GetCacheValue(ctx context.Context, walletUUID string) (int64, error)
 }
 
 type Register interface {

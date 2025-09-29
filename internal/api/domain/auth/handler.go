@@ -9,8 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/common"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )

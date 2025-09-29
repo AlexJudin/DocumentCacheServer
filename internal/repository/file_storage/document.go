@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/entity"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 )
 
 var _ FileStorage = (*FileStorageRepo)(nil)

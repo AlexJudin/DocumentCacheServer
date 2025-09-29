@@ -14,7 +14,7 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain"
-	"github.com/AlexJudin/DocumentCacheServer/internal/cache"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 )
