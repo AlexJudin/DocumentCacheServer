@@ -3,9 +3,8 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
-	"path/filepath"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
@@ -28,22 +27,24 @@ func NewCacheClientRepo(cfg *config.Сonfig, redisClient *redis.Client) *CacheCl
 	}
 }
 
-func (c *CacheClientRepo) Set(ctx context.Context, key, mime string, data interface{}, isFile bool) error {
-	log.Infof("start set document [%s] to cache", key)
+func (c *CacheClientRepo) Set(ctx context.Context, uuid, mime string, data interface{}, isFile bool) error {
+	log.Infof("start set document [%s] to cache", uuid)
 
 	var (
-		filePath string
-		file     []byte
-		jsonFile map[string]interface{}
+		filePath   string
+		file       []byte
+		jsonDocMap map[string]interface{}
+		err        error
 	)
 
-	fileInfo := make(map[string]interface{})
+	metadata := make(map[string]interface{})
 
 	switch data.(type) {
 	case string:
 		filePath = data.(string)
 	case map[string]interface{}:
-		jsonFile = data.(map[string]interface{})
+		jsonDocMap = data.(map[string]interface{})
+	default:
 	}
 
 	if isFile {
@@ -59,92 +60,74 @@ func (c *CacheClientRepo) Set(ctx context.Context, key, mime string, data interf
 			return err
 		}
 
-		fileInfo["filename"] = filepath.Base(filePath)
-		fileInfo["size"] = info.Size()
-		fileInfo["modified"] = info.ModTime().Unix()
-		fileInfo["data"] = file
+		metadata["size"] = info.Size()
 	} else {
-		fileInfo["data"] = jsonFile
-	}
-
-	fileInfo["isFile"] = isFile
-	fileInfo["mime"] = mime
-
-	dataByte, err := json.Marshal(fileInfo)
-	if err != nil {
-		return fmt.Errorf("failed to marshal value: %v", err)
-	}
-
-	log.Infof("end set document [%s] to cache", key)
-
-	return c.RedisClient.Set(ctx, key, dataByte, c.Cfg.CacheTTL).Err()
-}
-
-func (c *CacheClientRepo) Get(ctx context.Context, key string) ([]byte, string, bool) {
-	log.Infof("start get document [%s] from cache", key)
-
-	var fileInfo map[string]interface{}
-
-	data, err := c.RedisClient.Get(ctx, key).Bytes()
-	if err != nil {
-		log.Debugf("failed to get file info: %+v", err)
-		return nil, "", false
-	}
-
-	err = json.Unmarshal(data, &fileInfo)
-	if err != nil {
-		log.Debugf("failed to unmarshal fileInfo: %+v", err)
-		return nil, "", false
-	}
-
-	mime, ok := fileInfo["mime"].(string)
-	if !ok {
-		log.Debugf("failed to get file info: %+v", fileInfo)
-		return nil, "", false
-	}
-
-	switch fileInfo["data"].(type) {
-	case string:
-		file, ok := fileInfo["data"].(string)
-		if !ok {
-			log.Debugf("failed to get file info: %+v", fileInfo)
-			return nil, "", false
-		}
-
-		return []byte(file), mime, true
-	case map[string]interface{}:
-		jsonDocMap, ok := fileInfo["data"].(map[string]interface{})
-		if !ok {
-			log.Debugf("failed to get file info: %+v", fileInfo)
-		}
-
 		result := entity.ApiResponse{
 			Data: jsonDocMap,
 		}
 
-		jsonDoc, err := json.Marshal(result)
+		file, err = json.Marshal(result)
 		if err != nil {
-			return nil, "", false
+			log.Debugf("error marshalling file: %+v", err)
+			return err
 		}
-
-		return jsonDoc, mime, true
 	}
 
-	log.Infof("end get document [%s] from cache", key)
+	err = c.RedisClient.Set(ctx, "file:data:"+uuid, file, c.Cfg.CacheTTL).Err()
+	if err != nil {
+		return err
+	}
 
-	return nil, "", false
+	metadata["type"] = mime
+	metadata["created"] = time.Now().Unix()
+
+	err = c.RedisClient.HSet(ctx, "file:meta:"+uuid, metadata).Err()
+	if err != nil {
+		log.Errorf("error setting metadata: %+v", err)
+		return err
+	}
+
+	log.Infof("end set document [%s] to cache", uuid)
+
+	return err
 }
 
-func (c *CacheClientRepo) Delete(ctx context.Context, key string) error {
-	log.Infof("start delete document [%s] from cache", key)
+func (c *CacheClientRepo) Get(ctx context.Context, uuid string) ([]byte, string, bool) {
+	log.Infof("start get document [%s] from cache", uuid)
 
-	err := c.RedisClient.Del(ctx, key).Err()
+	file, err := c.RedisClient.Get(ctx, "file:data:"+uuid).Bytes()
+	if err != nil {
+		log.Debugf("error getting file data: %+v", err)
+		return nil, "", false
+	}
+
+	meta, err := c.RedisClient.HGetAll(ctx, "file:meta:"+uuid).Result()
+	if err != nil {
+		log.Debugf("error getting file meta: %+v", err)
+		return nil, "", false
+	}
+
+	mime, ok := meta["type"]
+	if !ok {
+		log.Debugf("error to get mime: %+v", err)
+		return nil, "", false
+	}
+
+	log.Infof("end get document [%s] from cache", uuid)
+
+	return file, mime, true
+}
+
+func (c *CacheClientRepo) Delete(ctx context.Context, uuid string) error {
+	log.Infof("start delete document [%s] from cache", uuid)
+
+	err := c.RedisClient.Del(ctx, uuid).Err()
 	if err != nil {
 		log.Debugf("failed to delete document: %+v", err)
 		return err
 	}
 
-	log.Infof("end delete document [%s] from cache", key)
+	log.Infof("end delete document [%s] from cache", uuid)
 
 	return err
 }
