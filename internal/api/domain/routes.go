@@ -33,7 +33,7 @@ func AddRoutes(config *config.Сonfig,
 	repoUser := postgres.NewUserRepo(db)
 
 	// init cacheClient
-	cacheClient := cache.NewCacheClientRepo(redisClient)
+	cacheClient := cache.NewCacheClientRepo(config, redisClient)
 
 	// init mongoDB repository
 	repoJson := mongodb.NewMongoDBRepo(mgDbClient)

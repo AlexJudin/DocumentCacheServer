@@ -12,6 +12,8 @@ import (
 const (
 	accessTokenTTLDefault  = 5
 	refreshTokenTTLDefault = 60
+
+	cacheTTLDefault = 15
 )
 
 type Сonfig struct {
@@ -49,6 +51,7 @@ type ConfigRedis struct {
 	Host     string
 	Port     string
 	Password string
+	CacheTTL time.Duration
 }
 
 type ConfigFileStorage struct {
@@ -105,10 +108,16 @@ func New() (*Сonfig, error) {
 	}
 	cfg.ConfigAuth = &authCfg
 
+	cacheTTL, err := time.ParseDuration(os.Getenv("CACHE_TTL"))
+	if err != nil {
+		cacheTTL = cacheTTLDefault
+	}
+
 	redisCfg := ConfigRedis{
 		Host:     os.Getenv("REDIS_HOST"),
 		Port:     os.Getenv("REDIS_PORT"),
 		Password: os.Getenv("REDIS_PASSWORD"),
+		CacheTTL: cacheTTL * time.Minute,
 	}
 	cfg.ConfigRedis = &redisCfg
 

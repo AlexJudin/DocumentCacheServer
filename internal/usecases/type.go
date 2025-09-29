@@ -1,8 +1,7 @@
 package usecases
 
 import (
-	entity "github.com/AlexJudin/DocumentCacheServer/internal/entity"
-
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 

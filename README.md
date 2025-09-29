@@ -41,7 +41,8 @@
 
 - `REDIS_HOST` - хост кэш на базе Redis.
 - `REDIS_PORT` - порт кэш на базе Redis. Пример "6379".
-- `REDIS_PASSWORD` - время жизни refresh токена.
+- `REDIS_PASSWORD` - пароль для доступа в Redis.
+- `CACHE_TTL` - время жизни файла в кэш.
 
 - `FILE_MAIN_DIR` - путь к файловому хранилищу. Пример "./documents_file".
 

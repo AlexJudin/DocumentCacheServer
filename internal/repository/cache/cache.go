@@ -6,22 +6,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 )
 
 var _ Client = (*CacheClientRepo)(nil)
 
 type CacheClientRepo struct {
+	Cfg         *config.Сonfig
 	RedisClient *redis.Client
 }
 
-func NewCacheClientRepo(redisClient *redis.Client) *CacheClientRepo {
+func NewCacheClientRepo(cfg *config.Сonfig, redisClient *redis.Client) *CacheClientRepo {
 	return &CacheClientRepo{
+		Cfg:         cfg,
 		RedisClient: redisClient,
 	}
 }
@@ -75,7 +77,7 @@ func (c *CacheClientRepo) Set(ctx context.Context, key, mime string, data interf
 
 	log.Infof("end set document [%s] to cache", key)
 
-	return c.RedisClient.Set(ctx, key, dataByte, 60*time.Minute).Err()
+	return c.RedisClient.Set(ctx, key, dataByte, c.Cfg.CacheTTL).Err()
 }
 
 func (c *CacheClientRepo) Get(ctx context.Context, key string) ([]byte, string, bool) {
