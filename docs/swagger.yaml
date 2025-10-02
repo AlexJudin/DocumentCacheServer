@@ -1,0 +1,295 @@
+basePath: /api
+definitions:
+  entity.ApiError:
+    properties:
+      code:
+        type: integer
+      text:
+        type: string
+    type: object
+  entity.ApiResponse:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      error:
+        $ref: '#/definitions/entity.ApiError'
+      response:
+        additionalProperties: true
+        type: object
+    type: object
+  entity.DocumentListRequest:
+    properties:
+      key:
+        type: string
+      limit:
+        type: integer
+      login:
+        type: string
+      value:
+        type: string
+    type: object
+  model.User:
+    properties:
+      login:
+        type: string
+      pswd:
+        type: string
+      token:
+        type: string
+    type: object
+host: localhost:7540
+info:
+  contact:
+    email: spdante@mail.ru
+    name: Alexey Yudin
+    url: http://www.swagger.io/support
+  description: API для управления документами и кэширования
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Document Cache Server API
+  version: "1.0"
+paths:
+  /docs:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список документов с возможностью фильтрации по пользователю
+      parameters:
+      - description: Параметры запроса списка документов
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.DocumentListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Для HEAD запроса - только проверка доступности
+        "400":
+          description: Некорректные параметры запроса
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Получить список документов
+      tags:
+      - documents
+    head:
+      consumes:
+      - application/json
+      description: Возвращает список документов с возможностью фильтрации по пользователю
+      parameters:
+      - description: Параметры запроса списка документов
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.DocumentListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Для HEAD запроса - только проверка доступности
+        "400":
+          description: Некорректные параметры запроса
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Получить список документов
+      tags:
+      - documents
+    post:
+      consumes:
+      - multipart/form-data
+      description: Загружает и сохраняет документ с метаданными и опциональным JSON
+        содержимым
+      parameters:
+      - description: Метаданные документа в формате JSON
+        in: formData
+        name: meta
+        required: true
+        type: string
+      - description: JSON содержимое документа
+        in: formData
+        name: json
+        type: string
+      - description: Файл документа (если meta.file = true)
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Документ успешно сохранен
+          schema:
+            $ref: '#/definitions/entity.ApiResponse'
+        "400":
+          description: Некорректные параметры запроса
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Сохранить документ
+      tags:
+      - documents
+  /docs/:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет документ по его идентификатору
+      parameters:
+      - description: Идентификатор документа
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Документ успешно удален
+          schema:
+            $ref: '#/definitions/entity.ApiResponse'
+        "400":
+          description: Ошибка при удалении документа
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Удалить документ по ID
+      tags:
+      - documents
+    get:
+      consumes:
+      - application/json
+      description: Возвращает документ по его идентификатору
+      parameters:
+      - description: Идентификатор документа
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      - application/json
+      responses:
+        "200":
+          description: Для HEAD запроса - только проверка доступности
+        "400":
+          description: Документ не найден или ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Получить документ по ID
+      tags:
+      - documents
+    head:
+      consumes:
+      - application/json
+      description: Возвращает документ по его идентификатору
+      parameters:
+      - description: Идентификатор документа
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      - application/json
+      responses:
+        "200":
+          description: Для HEAD запроса - только проверка доступности
+        "400":
+          description: Документ не найден или ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Получить документ по ID
+      tags:
+      - documents
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя в системе с использованием административного
+        токена
+      parameters:
+      - description: Данные пользователя для регистрации
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Пользователь успешно зарегистрирован
+          schema:
+            $ref: '#/definitions/entity.ApiResponse'
+        "400":
+          description: Некорректные данные запроса
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "403":
+          description: Неверный административный токен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "409":
+          description: Пользователь уже существует
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "500":
+          description: Внутренняя ошибка сервера
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+        "503":
+          description: Сервер недоступен
+          schema:
+            $ref: '#/definitions/entity.ApiError'
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

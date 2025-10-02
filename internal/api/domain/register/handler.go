@@ -25,6 +25,20 @@ func NewRegisterHandler(uc usecases.Register) RegisterHandler {
 	return RegisterHandler{uc: uc}
 }
 
+// RegisterUser godoc
+// @Summary Регистрация нового пользователя
+// @Description Регистрирует нового пользователя в системе с использованием административного токена
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param user body model.User true "Данные пользователя для регистрации"
+// @Success 201 {object} entity.ApiResponse "Пользователь успешно зарегистрирован"
+// @Failure 400 {object} entity.ApiError "Некорректные данные запроса"
+// @Failure 403 {object} entity.ApiError "Неверный административный токен"
+// @Failure 409 {object} entity.ApiError "Пользователь уже существует"
+// @Failure 500 {object} entity.ApiError "Внутренняя ошибка сервера"
+// @Failure 503 {object} entity.ApiError "Сервер недоступен"
+// @Router /register [post]
 func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var (
 		user model.User

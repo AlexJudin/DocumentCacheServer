@@ -36,7 +36,8 @@ type СonfigDB struct {
 }
 
 type ConfigMongoDB struct {
-	MongoConnectionString string
+	Host string
+	Port string
 }
 
 type ConfigAuth struct {
@@ -59,7 +60,7 @@ type ConfigFileStorage struct {
 }
 
 func New() (*Сonfig, error) {
-	err := godotenv.Load("config/config.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +86,8 @@ func New() (*Сonfig, error) {
 	cfg.СonfigDB = &dbCfg
 
 	mgDbCfg := ConfigMongoDB{
-		MongoConnectionString: os.Getenv("MGDB_CONNECTION_STRING"),
+		Host: os.Getenv("MGDB_HOST"),
+		Port: os.Getenv("MGDB_PORT"),
 	}
 	cfg.ConfigMongoDB = &mgDbCfg
 
@@ -137,5 +139,7 @@ func (c *Сonfig) GetDataSourceName() string {
 }
 
 func (c *Сonfig) GetMongoDBSourse() string {
-	return c.MongoConnectionString
+	str := fmt.Sprintf("mongodb://%s:%s", c.ConfigMongoDB.Host, c.ConfigMongoDB.Port)
+
+	return str
 }

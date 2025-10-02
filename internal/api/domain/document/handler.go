@@ -25,6 +25,20 @@ func NewDocumentHandler(uc usecases.Document) DocumentHandler {
 	}
 }
 
+// SaveDocument godoc
+// @Summary Сохранить документ
+// @Description Загружает и сохраняет документ с метаданными и опциональным JSON содержимым
+// @Tags documents
+// @Accept multipart/form-data
+// @Produce json
+// @Param meta formData string true "Метаданные документа в формате JSON"
+// @Param json formData string false "JSON содержимое документа"
+// @Param file formData file false "Файл документа (если meta.file = true)"
+// @Success 201 {object} entity.ApiResponse "Документ успешно сохранен"
+// @Failure 400 {object} entity.ApiError "Некорректные параметры запроса"
+// @Failure 500 {object} entity.ApiError "Внутренняя ошибка сервера"
+// @Failure 503 {object} entity.ApiError "Сервер недоступен"
+// @Router /docs [post]
 func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
@@ -116,6 +130,20 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetDocumentsList godoc
+// @Summary Получить список документов
+// @Description Возвращает список документов с возможностью фильтрации по пользователю
+// @Tags documents
+// @Accept json
+// @Produce json
+// @Param request body entity.DocumentListRequest true "Параметры запроса списка документов"
+// @Success 200 {object} entity.ApiResponse "Список документов успешно получен"
+// @Success 200 {object} nil "Для HEAD запроса - только проверка доступности"
+// @Failure 400 {object} entity.ApiError "Некорректные параметры запроса"
+// @Failure 500 {object} entity.ApiError "Внутренняя ошибка сервера"
+// @Failure 503 {object} entity.ApiError "Сервер недоступен"
+// @Router /docs [get]
+// @Router /docs [head]
 func (h *DocumentHandler) GetDocumentsList(w http.ResponseWriter, r *http.Request) {
 	var (
 		req entity.DocumentListRequest
@@ -162,7 +190,6 @@ func (h *DocumentHandler) GetDocumentsList(w http.ResponseWriter, r *http.Reques
 	}
 
 	if r.Method == http.MethodHead {
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 	}
 
@@ -192,6 +219,21 @@ func (h *DocumentHandler) GetDocumentsList(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// GetDocumentById godoc
+// @Summary Получить документ по ID
+// @Description Возвращает документ по его идентификатору
+// @Tags documents
+// @Accept json
+// @Produce octet-stream
+// @Produce json
+// @Param id query string true "Идентификатор документа"
+// @Success 200 {file} byte "Документ успешно получен"
+// @Success 200 {object} nil "Для HEAD запроса - только проверка доступности"
+// @Failure 400 {object} entity.ApiError "Не передан идентификатор документа"
+// @Failure 400 {object} entity.ApiError "Документ не найден или ошибка сервера"
+// @Failure 503 {object} entity.ApiError "Сервер недоступен"
+// @Router /docs/ [get]
+// @Router /docs/ [head]
 func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request) {
 	idDoc := r.FormValue("id")
 	if idDoc == "" {
@@ -213,7 +255,6 @@ func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request
 	}
 
 	if r.Method == http.MethodHead {
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 	}
 
@@ -228,6 +269,19 @@ func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// DeleteDocumentById godoc
+// @Summary Удалить документ по ID
+// @Description Удаляет документ по его идентификатору
+// @Tags documents
+// @Accept json
+// @Produce json
+// @Param id query string true "Идентификатор документа"
+// @Success 200 {object} entity.ApiResponse "Документ успешно удален"
+// @Failure 400 {object} entity.ApiError "Не передан идентификатор документа"
+// @Failure 400 {object} entity.ApiError "Ошибка при удалении документа"
+// @Failure 500 {object} entity.ApiError "Внутренняя ошибка сервера"
+// @Failure 503 {object} entity.ApiError "Сервер недоступен"
+// @Router /docs/ [delete]
 func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Request) {
 	idDoc := r.FormValue("id")
 	if idDoc == "" {
