@@ -24,7 +24,7 @@ ARG BUILD_TIME=unknown
 # Собираем приложение
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
     -ldflags="-w -s -X main.version=${VERSION} -X main.buildTime=${BUILD_TIME}" \
-    -o /app/${APP_NAME} ./cmd/
+    -o /${APP_NAME} ./cmd/
 
 # Фаза запуска
 FROM scratch AS runtime
@@ -34,7 +34,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 # Копируем собранное приложение
-COPY --from=builder /app/${APP_NAME} /app/${APP_NAME}
+COPY --from=builder /${APP_NAME} /${APP_NAME}
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -43,4 +43,4 @@ WORKDIR /app
 EXPOSE 7540
 
 # Команда для запуска
-CMD ["/app/doc_serv"]
+CMD ["/doc_serv"]
