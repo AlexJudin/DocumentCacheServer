@@ -25,11 +25,11 @@ const (
 )
 
 type AuthService struct {
-	Config       *config.Сonfig
+	Config       *config.Config
 	TokenStorage postgres.TokenStorage
 }
 
-func NewAuthService(cfg *config.Сonfig, db *gorm.DB) AuthService {
+func NewAuthService(cfg *config.Config, db *gorm.DB) AuthService {
 	return AuthService{
 		Config:       cfg,
 		TokenStorage: postgres.NewTokenStorageRepo(db),

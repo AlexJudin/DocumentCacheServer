@@ -17,9 +17,10 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/s3_storage"
 )
 
-func startApp(cfg *config.Сonfig) {
+func startApp(cfg *config.Config) {
 	connStr := cfg.GetDataSourceName()
 	db, err := postgres.ConnectDB(connStr)
 	if err != nil {
@@ -38,13 +39,18 @@ func startApp(cfg *config.Сonfig) {
 		log.Error("error connecting to redis")
 	}
 
+	minioClient, err := s3_storage.NewMinioClient(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := chi.NewRouter()
-	domain.AddRoutes(cfg, db, mgDb.Client, redisClient, r)
+	domain.AddRoutes(cfg, db, mgDb.Client, redisClient, minioClient, r)
 
 	startHTTPServer(cfg, r)
 }
 
-func startHTTPServer(cfg *config.Сonfig, r *chi.Mux) {
+func startHTTPServer(cfg *config.Config, r *chi.Mux) {
 	var err error
 
 	log.Info("Start http server")

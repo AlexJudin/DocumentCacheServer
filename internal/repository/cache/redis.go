@@ -14,7 +14,7 @@ type User struct {
 	Name string `json:"name"`
 }
 
-func ConnectToRedis(cfg *config.Сonfig) (*redis.Client, error) {
+func ConnectToRedis(cfg *config.Config) (*redis.Client, error) {
 	var connStr strings.Builder
 
 	connStr.WriteString(cfg.ConfigRedis.Host)

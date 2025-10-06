@@ -13,25 +13,28 @@ import (
 	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
+	s3storage "github.com/AlexJudin/DocumentCacheServer/internal/repository/s3_storage"
 )
 
 var _ Document = (*DocumentUsecase)(nil)
 
 type DocumentUsecase struct {
-	Ctx         context.Context
-	DB          postgres.Document
-	Cache       cache.Client
-	FileStorage filestorage.FileStorage
-	MongoDB     mongodb.Document
+	Ctx          context.Context
+	DB           postgres.Document
+	Cache        cache.Client
+	FileStorage  filestorage.FileStorage
+	MongoDB      mongodb.Document
+	MinioStorage s3storage.DocumentFile
 }
 
-func NewDocumentUsecase(cfg *config.Сonfig, db postgres.Document, cache cache.Client, mgdb mongodb.Document) *DocumentUsecase {
+func NewDocumentUsecase(cfg *config.Config, db postgres.Document, cache cache.Client, mgdb mongodb.Document, fileStorage s3storage.DocumentFile) *DocumentUsecase {
 	return &DocumentUsecase{
-		Ctx:         context.Background(),
-		DB:          db,
-		Cache:       cache,
-		FileStorage: filestorage.NewFileStorageRepo(cfg),
-		MongoDB:     mgdb,
+		Ctx:          context.Background(),
+		DB:           db,
+		Cache:        cache,
+		FileStorage:  filestorage.NewFileStorageRepo(cfg),
+		MongoDB:      mgdb,
+		MinioStorage: fileStorage,
 	}
 }
 

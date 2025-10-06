@@ -16,18 +16,19 @@ const (
 	cacheTTLDefault = 15
 )
 
-type Сonfig struct {
+type Config struct {
 	Host     string
 	Port     string
 	LogLevel log.Level
-	*СonfigDB
+	*ConfigDB
 	*ConfigMongoDB
 	*ConfigAuth
 	*ConfigRedis
 	*ConfigFileStorage
+	*ConfigMinio
 }
 
-type СonfigDB struct {
+type ConfigDB struct {
 	Port     string
 	User     string
 	Password string
@@ -59,13 +60,20 @@ type ConfigFileStorage struct {
 	MainDir string
 }
 
-func New() (*Сonfig, error) {
+type ConfigMinio struct {
+	Endpoint        string
+	AccessKeyID     string
+	SecretAccessKey string
+	UseSSL          bool
+}
+
+func New() (*Config, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := Сonfig{
+	cfg := Config{
 		Host: os.Getenv("HOST"),
 		Port: os.Getenv("PORT"),
 	}
@@ -77,13 +85,13 @@ func New() (*Сonfig, error) {
 
 	cfg.LogLevel = logLevel
 
-	dbCfg := СonfigDB{
+	dbCfg := ConfigDB{
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Password: os.Getenv("DB_PASSWORD"),
 		DBName:   os.Getenv("DB_NAME"),
 	}
-	cfg.СonfigDB = &dbCfg
+	cfg.ConfigDB = &dbCfg
 
 	mgDbCfg := ConfigMongoDB{
 		Host: os.Getenv("MGDB_HOST"),
@@ -128,18 +136,29 @@ func New() (*Сonfig, error) {
 	}
 	cfg.ConfigFileStorage = &fileCfg
 
+	cfg.ConfigMinio = &ConfigMinio{
+		Endpoint:        getMinioEndpoint(),
+		AccessKeyID:     os.Getenv("MINIO_ROOT_USER"),
+		SecretAccessKey: os.Getenv("MINIO_ROOT_PASSWORD"),
+		UseSSL:          false,
+	}
+
 	return &cfg, nil
 }
 
-func (c *Сonfig) GetDataSourceName() string {
+func (c *Config) GetDataSourceName() string {
 	str := fmt.Sprintf("host=localhost port=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.СonfigDB.Port, c.СonfigDB.User, c.СonfigDB.Password, c.СonfigDB.DBName)
+		c.ConfigDB.Port, c.ConfigDB.User, c.ConfigDB.Password, c.ConfigDB.DBName)
 
 	return str
 }
 
-func (c *Сonfig) GetMongoDBSourse() string {
+func (c *Config) GetMongoDBSourse() string {
 	str := fmt.Sprintf("mongodb://%s:%s", c.ConfigMongoDB.Host, c.ConfigMongoDB.Port)
 
 	return str
+}
+
+func getMinioEndpoint() string {
+	return fmt.Sprintf("%s:%s", os.Getenv("MINIO_ROOT_HOST"), os.Getenv("MINIO_ROOT_PORT"))
 }

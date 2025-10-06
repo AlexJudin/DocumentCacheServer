@@ -14,10 +14,10 @@ import (
 var _ FileStorage = (*FileStorageRepo)(nil)
 
 type FileStorageRepo struct {
-	Cfg *config.Сonfig
+	Cfg *config.Config
 }
 
-func NewFileStorageRepo(cfg *config.Сonfig) *FileStorageRepo {
+func NewFileStorageRepo(cfg *config.Config) *FileStorageRepo {
 	return &FileStorageRepo{
 		Cfg: cfg,
 	}

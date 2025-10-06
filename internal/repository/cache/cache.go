@@ -16,11 +16,11 @@ import (
 var _ Client = (*CacheClientRepo)(nil)
 
 type CacheClientRepo struct {
-	Cfg         *config.Сonfig
+	Cfg         *config.Config
 	RedisClient *redis.Client
 }
 
-func NewCacheClientRepo(cfg *config.Сonfig, redisClient *redis.Client) *CacheClientRepo {
+func NewCacheClientRepo(cfg *config.Config, redisClient *redis.Client) *CacheClientRepo {
 	return &CacheClientRepo{
 		Cfg:         cfg,
 		RedisClient: redisClient,

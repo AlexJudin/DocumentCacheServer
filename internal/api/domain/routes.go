@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -17,14 +18,16 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/s3_storage"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
 
-func AddRoutes(config *config.Сonfig,
+func AddRoutes(config *config.Config,
 	db *gorm.DB,
 	mgDbClient *mongo.Client,
 	redisClient *redis.Client,
+	minioClient *minio.Client,
 	r *chi.Mux) {
 	// init services
 	authService := service.NewAuthService(config, db)
@@ -39,8 +42,11 @@ func AddRoutes(config *config.Сonfig,
 	// init mongoDB repository
 	repoJson := mongodb.NewMongoDBRepo(mgDbClient)
 
+	// init minioS3 client
+	fileRepo := s3_storage.NewDocumentFileRepo(minioClient)
+
 	// init usecases
-	docsUC := usecases.NewDocumentUsecase(config, repoDocument, cacheClient, repoJson)
+	docsUC := usecases.NewDocumentUsecase(config, repoDocument, cacheClient, repoJson, fileRepo)
 	docsHandler := document.NewDocumentHandler(docsUC)
 
 	registerUC := usecases.NewRegisterUsecase(repoUser, authService)
