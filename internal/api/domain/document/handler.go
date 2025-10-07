@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -88,9 +89,18 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
+		data, err := io.ReadAll(file)
+		if err != nil {
+			log.Errorf("save document error: %+v", err)
+			messageError = "Не удалось прочитать файл документа."
+
+			common.ApiError(http.StatusBadRequest, messageError, w)
+			return
+		}
+
 		document.File = &entity.DocumentFile{
 			Name:    header.Filename,
-			Content: file,
+			Content: data,
 		}
 	}
 

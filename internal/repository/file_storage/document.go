@@ -1,84 +1,85 @@
 package file_storage
 
 import (
+	"bytes"
+	"context"
 	"io"
-	"os"
-	"path/filepath"
 
+	"github.com/minio/minio-go/v7"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 )
 
-var _ FileStorage = (*FileStorageRepo)(nil)
+var _ DocumentFile = (*DocumentFileRepo)(nil)
 
-type FileStorageRepo struct {
-	Cfg *config.Config
+const bucketName = "document-files"
+
+type DocumentFileRepo struct {
+	Client     *minio.Client
+	bucketName string
 }
 
-func NewFileStorageRepo(cfg *config.Config) *FileStorageRepo {
-	return &FileStorageRepo{
-		Cfg: cfg,
+func NewDocumentFileRepo(minioClient *minio.Client) *DocumentFileRepo {
+	return &DocumentFileRepo{
+		Client:     minioClient,
+		bucketName: bucketName,
 	}
 }
 
-func (r *FileStorageRepo) Create(document *entity.Document) (string, error) {
-	log.Infof("start creating file [%s], document [%s]", document.File.Name, document)
+func (m *DocumentFileRepo) Upload(ctx context.Context, documentName string, data []byte) (string, error) {
+	log.Infof("start upload file document [%s]", documentName)
 
-	dirPath := filepath.Join(r.Cfg.MainDir, document.Meta.UUID)
+	var filePath string
 
-	_, err := os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		os.MkdirAll(dirPath, os.ModePerm)
-	}
+	size := int64(len(data))
 
-	filePath := filepath.Join(dirPath, document.File.Name)
+	reader := bytes.NewReader(data)
 
-	dst, err := os.Create(filePath)
+	info, err := m.Client.PutObject(ctx, m.bucketName, documentName, reader, size, minio.PutObjectOptions{
+		ContentType: "application/octet-stream",
+	})
 	if err != nil {
-		log.Debugf("error creating file [%s]: %+v", filePath, err)
-		return "", err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, document.File.Content)
-	if err != nil {
-		log.Debugf("error creating file [%s]: %+v", filePath, err)
-		return "", err
+		log.Debugf("error upload file document [%s]: %+v", documentName, err)
+		return filePath, err
 	}
 
-	log.Infof("end creating file [%s], document [%s]", document.File.Name, document)
+	filePath = info.Location
+
+	log.Infof("end upload file document [%s]", documentName)
 
 	return filePath, nil
 }
 
-func (r *FileStorageRepo) Open(filePath string) ([]byte, error) {
-	log.Infof("start opening file [%s]", filePath)
+func (m *DocumentFileRepo) Download(ctx context.Context, documentName string) ([]byte, error) {
+	log.Infof("start download file [%s]", documentName)
 
-	file, err := os.ReadFile(filePath)
+	object, err := m.Client.GetObject(ctx, m.bucketName, documentName, minio.GetObjectOptions{})
 	if err != nil {
-		log.Debugf("error opening file [%s]: %+v", filePath, err)
+		log.Debugf("error download file [%s]: %+v", documentName, err)
+		return nil, err
+	}
+	defer object.Close()
+
+	data, err := io.ReadAll(object)
+	if err != nil {
+		log.Debugf("error download file [%s]: %+v", documentName, err)
 		return nil, err
 	}
 
-	log.Infof("end getting file [%s]", filePath)
+	log.Infof("end download file [%s]", documentName)
 
-	return file, nil
+	return data, nil
 }
 
-func (r *FileStorageRepo) Delete(uuid string) error {
-	log.Infof("start deleting file [%s]", uuid)
+func (m *DocumentFileRepo) Delete(ctx context.Context, documentName string) error {
+	log.Infof("start deleting file [%s]", documentName)
 
-	fullPath := filepath.Join(r.Cfg.MainDir, uuid)
-
-	err := os.RemoveAll(fullPath)
+	err := m.Client.RemoveObject(ctx, m.bucketName, documentName, minio.RemoveObjectOptions{})
 	if err != nil {
-		log.Debugf("error deleting file document [%s]: %+v", uuid, err)
+		log.Debugf("error deleting file [%s]: %+v", documentName, err)
 		return err
 	}
 
-	log.Infof("end deleting file [%s]", uuid)
+	log.Infof("end deleting file [%s]", documentName)
 
 	return nil
 }

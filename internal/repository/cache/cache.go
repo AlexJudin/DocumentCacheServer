@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -31,7 +30,6 @@ func (c *CacheClientRepo) Set(ctx context.Context, uuid, mime string, data inter
 	log.Infof("start set document [%s] to cache", uuid)
 
 	var (
-		filePath   string
 		file       []byte
 		jsonDocMap map[string]interface{}
 		err        error
@@ -40,27 +38,14 @@ func (c *CacheClientRepo) Set(ctx context.Context, uuid, mime string, data inter
 	metadata := make(map[string]interface{})
 
 	switch data.(type) {
-	case string:
-		filePath = data.(string)
+	case []byte:
+		file = data.([]byte)
 	case map[string]interface{}:
 		jsonDocMap = data.(map[string]interface{})
-	default:
 	}
 
 	if isFile {
-		info, err := os.Stat(filePath)
-		if err != nil {
-			log.Debugf("error getting file info: %+v", err)
-			return err
-		}
-
-		file, err = os.ReadFile(filePath)
-		if err != nil {
-			log.Debugf("error reading file: %+v", err)
-			return err
-		}
-
-		metadata["size"] = info.Size()
+		metadata["size"] = len(file)
 	} else {
 		result := entity.ApiResponse{
 			Data: jsonDocMap,

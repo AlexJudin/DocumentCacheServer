@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("entity not found")
+	ErrUserNotFound      = errors.New("user not found")
 	ErrIncorrectPassword = errors.New("incorrect password")
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrInvalidAdminToken = errors.New("admin token invalid")

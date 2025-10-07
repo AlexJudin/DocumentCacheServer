@@ -28,7 +28,7 @@ func (u *AuthUsecase) AuthorizationUser(login string, password string) (entity.T
 	}
 
 	if user.IsNotFound() {
-		return entity.Tokens{}, custom_error.ErrNotFound
+		return entity.Tokens{}, custom_error.ErrUserNotFound
 	}
 
 	passwordHash := u.ServiceAuth.GenerateHashPassword(password)

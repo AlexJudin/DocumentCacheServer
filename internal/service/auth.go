@@ -110,7 +110,7 @@ func (s AuthService) RefreshToken(refreshToken string) (entity.Tokens, error) {
 	// поиск токена в хранилище claims.AccessTokenID
 	login, err := s.TokenStorage.Get(claims.AccessTokenID)
 	if err != nil || login != claims.Login {
-		return entity.Tokens{}, custom_error.ErrNotFound
+		return entity.Tokens{}, custom_error.ErrUserNotFound
 	}
 
 	tokens, err := s.GenerateTokens(claims.Login)

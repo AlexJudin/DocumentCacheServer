@@ -6,35 +6,31 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
-	s3storage "github.com/AlexJudin/DocumentCacheServer/internal/repository/s3_storage"
 )
 
 var _ Document = (*DocumentUsecase)(nil)
 
 type DocumentUsecase struct {
-	Ctx          context.Context
-	DB           postgres.Document
-	Cache        cache.Client
-	FileStorage  filestorage.FileStorage
-	MongoDB      mongodb.Document
-	MinioStorage s3storage.DocumentFile
+	Ctx         context.Context
+	DB          postgres.Document
+	Cache       cache.Client
+	FileStorage filestorage.DocumentFile
+	MongoDB     mongodb.Document
 }
 
-func NewDocumentUsecase(cfg *config.Config, db postgres.Document, cache cache.Client, mgdb mongodb.Document, fileStorage s3storage.DocumentFile) *DocumentUsecase {
+func NewDocumentUsecase(db postgres.Document, cache cache.Client, mgdb mongodb.Document, fileStorage filestorage.DocumentFile) *DocumentUsecase {
 	return &DocumentUsecase{
-		Ctx:          context.Background(),
-		DB:           db,
-		Cache:        cache,
-		FileStorage:  filestorage.NewFileStorageRepo(cfg),
-		MongoDB:      mgdb,
-		MinioStorage: fileStorage,
+		Ctx:         context.Background(),
+		DB:          db,
+		Cache:       cache,
+		FileStorage: fileStorage,
+		MongoDB:     mgdb,
 	}
 }
 
@@ -44,12 +40,12 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 	document.Meta.UUID = uuidDoc
 
 	if document.Meta.File {
-		filePath, err := t.FileStorage.Create(document)
+		filePath, err := t.FileStorage.Upload(t.Ctx, uuidDoc, document.File.Content)
 		if err != nil {
 			return err
 		}
 
-		err = t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, filePath, true)
+		err = t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
 		if err != nil {
 			return err
 		}
@@ -93,7 +89,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 	}
 
 	if metaDoc.File {
-		file, err := t.FileStorage.Open(metaDoc.FilePath)
+		file, err := t.FileStorage.Download(t.Ctx, metaDoc.UUID)
 		if err != nil {
 			return nil, "", err
 		}
@@ -119,7 +115,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 }
 
 func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
-	err := t.FileStorage.Delete(uuid)
+	err := t.FileStorage.Delete(t.Ctx, uuid)
 	if err != nil {
 		return err
 	}

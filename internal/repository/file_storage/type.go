@@ -1,11 +1,11 @@
 package file_storage
 
 import (
-	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
+	"context"
 )
 
-type FileStorage interface {
-	Create(document *entity.Document) (string, error)
-	Open(filePath string) ([]byte, error)
-	Delete(uuid string) error
+type DocumentFile interface {
+	Upload(ctx context.Context, documentUUID string, data []byte) (string, error)
+	Download(ctx context.Context, documentUUID string) ([]byte, error)
+	Delete(ctx context.Context, documentUUID string) error
 }

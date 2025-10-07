@@ -50,7 +50,7 @@ func (h *AuthHandler) AuthorizationUser(w http.ResponseWriter, r *http.Request) 
 
 	tokens, err := h.uc.AuthorizationUser(user.Login, user.Password)
 	switch {
-	case errors.Is(err, custom_error.ErrNotFound):
+	case errors.Is(err, custom_error.ErrUserNotFound):
 		log.Errorf("authorization user error: %+v", err)
 		messageError = "Пользователь не найден."
 
@@ -121,7 +121,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.uc.RefreshToken(refreshToken.Value)
 	if err != nil {
-		if errors.Is(err, custom_error.ErrNotFound) {
+		if errors.Is(err, custom_error.ErrUserNotFound) {
 			log.Error("token not found in storage")
 			messageError = "Токен не найден"
 

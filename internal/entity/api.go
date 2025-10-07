@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"mime/multipart"
-
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
@@ -30,7 +28,7 @@ func (d *DocumentListRequest) LoginIsEmpty() bool {
 
 type DocumentFile struct {
 	Name    string
-	Content multipart.File
+	Content []byte
 }
 
 type Document struct {

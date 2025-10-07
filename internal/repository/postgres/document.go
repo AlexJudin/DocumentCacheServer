@@ -21,7 +21,7 @@ func NewDocumentRepo(db *gorm.DB) *DocumentRepo {
 }
 
 func (r *DocumentRepo) SaveDocument(document *model.MetaDocument) error {
-	log.Infof("start saving document [%s]", document.Name)
+	log.Infof("start saving document [%s]", document.UUID)
 
 	err := r.Db.Create(&document).Error
 	if err != nil {
@@ -29,7 +29,7 @@ func (r *DocumentRepo) SaveDocument(document *model.MetaDocument) error {
 		return err
 	}
 
-	log.Infof("end save document [%s]", document.Name)
+	log.Infof("end save document [%s]", document.UUID)
 
 	return nil
 }
@@ -57,7 +57,7 @@ func (r *DocumentRepo) GetDocumentsList(req entity.DocumentListRequest) ([]model
 }
 
 func (r *DocumentRepo) GetDocumentById(uuid string) (model.MetaDocument, error) {
-	log.Infof("start getting document by uuid[%s]", uuid)
+	log.Infof("start getting document by id[%s]", uuid)
 
 	var document model.MetaDocument
 
@@ -69,7 +69,7 @@ func (r *DocumentRepo) GetDocumentById(uuid string) (model.MetaDocument, error) 
 		return document, err
 	}
 
-	log.Infof("end getting document by uuid[%s]", uuid)
+	log.Infof("end getting document by id[%s]", uuid)
 
 	return document, nil
 }
