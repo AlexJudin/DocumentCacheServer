@@ -25,28 +25,24 @@ func NewDocumentFileRepo(minioClient *minio.Client) *DocumentFileRepo {
 	}
 }
 
-func (m *DocumentFileRepo) Upload(ctx context.Context, documentName string, data []byte) (string, error) {
+func (m *DocumentFileRepo) Upload(ctx context.Context, documentName string, data []byte) error {
 	log.Infof("start upload file document [%s]", documentName)
-
-	var filePath string
 
 	size := int64(len(data))
 
 	reader := bytes.NewReader(data)
 
-	info, err := m.Client.PutObject(ctx, m.bucketName, documentName, reader, size, minio.PutObjectOptions{
+	_, err := m.Client.PutObject(ctx, m.bucketName, documentName, reader, size, minio.PutObjectOptions{
 		ContentType: "application/octet-stream",
 	})
 	if err != nil {
 		log.Debugf("error upload file document [%s]: %+v", documentName, err)
-		return filePath, err
+		return err
 	}
-
-	filePath = info.Location
 
 	log.Infof("end upload file document [%s]", documentName)
 
-	return filePath, nil
+	return nil
 }
 
 func (m *DocumentFileRepo) Download(ctx context.Context, documentName string) ([]byte, error) {

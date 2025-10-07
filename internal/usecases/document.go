@@ -40,7 +40,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 	document.Meta.UUID = uuidDoc
 
 	if document.Meta.File {
-		filePath, err := t.FileStorage.Upload(t.Ctx, uuidDoc, document.File.Content)
+		err := t.FileStorage.Upload(t.Ctx, uuidDoc, document.File.Content)
 		if err != nil {
 			return err
 		}
@@ -49,8 +49,6 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 		if err != nil {
 			return err
 		}
-
-		document.Meta.FilePath = filePath
 	}
 
 	if len(document.Json) != 0 {

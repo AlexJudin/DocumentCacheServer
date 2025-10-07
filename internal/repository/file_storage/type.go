@@ -5,7 +5,7 @@ import (
 )
 
 type DocumentFile interface {
-	Upload(ctx context.Context, documentUUID string, data []byte) (string, error)
+	Upload(ctx context.Context, documentUUID string, data []byte) error
 	Download(ctx context.Context, documentUUID string) ([]byte, error)
 	Delete(ctx context.Context, documentUUID string) error
 }

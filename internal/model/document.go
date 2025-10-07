@@ -20,5 +20,4 @@ type MetaDocument struct {
 	Public    bool           `json:"public"`
 	Mime      string         `json:"mime"`
 	Grant     pq.StringArray `gorm:"type:text[]" json:"grant"`
-	FilePath  string         `json:"-"`
 }
