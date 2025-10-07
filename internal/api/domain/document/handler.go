@@ -116,7 +116,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	respMap := entity.ApiResponse{
 		Data: map[string]interface{}{
 			"json": jsonDocMap,
-			"file": document.Meta.FilePath,
+			"file": document.Meta.Name,
 		},
 	}
 
