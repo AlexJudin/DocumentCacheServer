@@ -19,12 +19,12 @@ var _ Document = (*DocumentUsecase)(nil)
 type DocumentUsecase struct {
 	Ctx         context.Context
 	DB          postgres.Document
-	Cache       cache.Client
-	FileStorage filestorage.DocumentFile
+	Cache       cache.Document
+	FileStorage filestorage.Document
 	MongoDB     mongodb.Document
 }
 
-func NewDocumentUsecase(db postgres.Document, cache cache.Client, mgdb mongodb.Document, fileStorage filestorage.DocumentFile) *DocumentUsecase {
+func NewDocumentUsecase(db postgres.Document, cache cache.Document, mgdb mongodb.Document, fileStorage filestorage.Document) *DocumentUsecase {
 	return &DocumentUsecase{
 		Ctx:         context.Background(),
 		DB:          db,
@@ -52,7 +52,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 	}
 
 	if len(document.Json) != 0 {
-		err := t.MongoDB.SaveDocument(t.Ctx, uuidDoc, document.Json)
+		err := t.MongoDB.Save(t.Ctx, uuidDoc, document.Json)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 		}
 	}
 
-	err := t.DB.SaveDocument(document.Meta)
+	err := t.DB.Save(document.Meta)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 }
 
 func (t *DocumentUsecase) GetDocumentsList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
-	return t.DB.GetDocumentsList(req)
+	return t.DB.GetList(req)
 }
 
 func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
@@ -81,7 +81,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 		return data, mime, nil
 	}
 
-	metaDoc, err := t.DB.GetDocumentById(uuid)
+	metaDoc, err := t.DB.GetById(uuid)
 	if err != nil {
 		return nil, "", err
 	}
@@ -95,7 +95,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 		return file, metaDoc.Mime, nil
 	}
 
-	jsonDocMap, err := t.MongoDB.GetDocumentById(t.Ctx, uuid)
+	jsonDocMap, err := t.MongoDB.GetById(t.Ctx, uuid)
 	if err != nil {
 		return nil, "", err
 	}
@@ -118,15 +118,12 @@ func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
 		return err
 	}
 
-	err = t.MongoDB.DeleteDocumentById(t.Ctx, uuid)
+	err = t.MongoDB.DeleteById(t.Ctx, uuid)
 	if err != nil {
 		return err
 	}
 
-	err = t.Cache.Delete(t.Ctx, uuid)
-	if err != nil {
-		return err
-	}
+	t.Cache.Delete(t.Ctx, uuid)
 
-	return t.DB.DeleteDocumentById(uuid)
+	return t.DB.DeleteById(uuid)
 }

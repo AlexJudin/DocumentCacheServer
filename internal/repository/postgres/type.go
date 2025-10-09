@@ -6,15 +6,15 @@ import (
 )
 
 type Document interface {
-	SaveDocument(document *model.MetaDocument) error
-	GetDocumentsList(req entity.DocumentListRequest) ([]model.MetaDocument, error)
-	GetDocumentById(uuid string) (model.MetaDocument, error)
-	DeleteDocumentById(uuid string) error
+	Save(document *model.MetaDocument) error
+	GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error)
+	GetById(uuid string) (model.MetaDocument, error)
+	DeleteById(uuid string) error
 }
 
 type User interface {
-	GetUserByLogin(login string) (model.User, error)
-	SaveUser(user model.User) error
+	GetByLogin(login string) (model.User, error)
+	Save(user model.User) error
 }
 
 type TokenStorage interface {

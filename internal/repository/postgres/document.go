@@ -20,22 +20,22 @@ func NewDocumentRepo(db *gorm.DB) *DocumentRepo {
 	return &DocumentRepo{Db: db}
 }
 
-func (r *DocumentRepo) SaveDocument(document *model.MetaDocument) error {
-	log.Infof("start saving document [%s]", document.UUID)
+func (r *DocumentRepo) Save(document *model.MetaDocument) error {
+	log.Infof("saving document [%s] metadata to database", document.UUID)
 
 	err := r.Db.Create(&document).Error
 	if err != nil {
-		log.Debugf("error save document: %+v", err)
-		return err
+		log.Debugf("failed to save document metadata: %+v", err)
+		return fmt.Errorf("failed to save document [%s] metadata", document.UUID)
 	}
 
-	log.Infof("end save document [%s]", document.UUID)
+	log.Infof("document [%s] metadata saved successfully", document.UUID)
 
 	return nil
 }
 
-func (r *DocumentRepo) GetDocumentsList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
-	log.Info("start getting documents list")
+func (r *DocumentRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
+	log.Info("retrieving documents list from database")
 
 	documents := make([]model.MetaDocument, req.Limit)
 
@@ -47,17 +47,17 @@ func (r *DocumentRepo) GetDocumentsList(req entity.DocumentListRequest) ([]model
 		Order("name asc").
 		Order("created_at desc").Error
 	if err != nil {
-		log.Debugf("error getting documents list: %+v", err)
-		return nil, err
+		log.Debugf("failed to retrieve documents list: %+v", err)
+		return nil, fmt.Errorf("failed to retrieve documents list")
 	}
 
-	log.Infof("end getting documents list [%s]", req.Login)
+	log.Info("documents list retrieved successfully")
 
 	return documents, nil
 }
 
-func (r *DocumentRepo) GetDocumentById(uuid string) (model.MetaDocument, error) {
-	log.Infof("start getting document by id[%s]", uuid)
+func (r *DocumentRepo) GetById(uuid string) (model.MetaDocument, error) {
+	log.Infof("retrieving document [%s] metadata", uuid)
 
 	var document model.MetaDocument
 
@@ -65,27 +65,27 @@ func (r *DocumentRepo) GetDocumentById(uuid string) (model.MetaDocument, error) 
 		Where("uuid = ?", uuid).
 		First(&document).Error
 	if err != nil {
-		log.Debugf("error getting document by uuid[%s]: %+v", uuid, err)
-		return document, err
+		log.Debugf("failed to retrieve document: %+v", err)
+		return document, fmt.Errorf("failed to retrieve document [%s] metadata", uuid)
 	}
 
-	log.Infof("end getting document by id[%s]", uuid)
+	log.Infof("document [%s] metadata retrieved successfully", uuid)
 
 	return document, nil
 }
 
-func (r *DocumentRepo) DeleteDocumentById(id string) error {
-	log.Infof("start deleting document by id[%s]", id)
+func (r *DocumentRepo) DeleteById(id string) error {
+	log.Infof("deleting document [%s] metadata", id)
 
 	err := r.Db.Model(&model.MetaDocument{}).
 		Where("uuid = ?", id).
 		Delete(&model.MetaDocument{}).Error
 	if err != nil {
-		log.Debugf("error deleting document by id[%s]: %+v", id, err)
-		return err
+		log.Debugf("failed to delete document metadata: %+v", err)
+		return fmt.Errorf("failed to delete document [%s] metadata", id)
 	}
 
-	log.Infof("end deleting document by id[%s]", id)
+	log.Infof("document [%s] metadata deleted successfully", id)
 
 	return nil
 }

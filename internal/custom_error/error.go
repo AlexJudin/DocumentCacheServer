@@ -11,4 +11,6 @@ var (
 	ErrInvalidAdminToken = errors.New("admin token invalid")
 	ErrInvalidLogin      = errors.New("invalid login")
 	ErrInvalidPassword   = errors.New("invalid password")
+
+	ErrDocumentNotFound = errors.New("document not found")
 )

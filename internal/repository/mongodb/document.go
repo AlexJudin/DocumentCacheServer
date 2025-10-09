@@ -12,18 +12,20 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
-type MongoDBRepo struct {
+var _ Document = (*DocumentRepo)(nil)
+
+type DocumentRepo struct {
 	Client *mongo.Client
 }
 
-func NewMongoDBRepo(client *mongo.Client) *MongoDBRepo {
-	return &MongoDBRepo{
+func NewDocumentRepo(client *mongo.Client) *DocumentRepo {
+	return &DocumentRepo{
 		Client: client,
 	}
 }
 
-func (r *MongoDBRepo) SaveDocument(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
-	log.Infof("start saving document [%s] to database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+func (r *DocumentRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
+	log.Infof("saving document [%s] json to database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -33,17 +35,17 @@ func (r *MongoDBRepo) SaveDocument(ctx context.Context, uuid string, jsonDoc map
 
 	_, err := collection.InsertOne(ctx, jsonDoc)
 	if err != nil {
-		log.Debugf("error save json document: %+v", err)
-		return err
+		log.Debugf("failed to save document json: %+v", err)
+		return fmt.Errorf("failed to save document [%s] json", uuid)
 	}
 
-	log.Infof("end save document [%s] to database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+	log.Infof("document [%s] json saved successfully", uuid)
 
 	return nil
 }
 
-func (r *MongoDBRepo) GetDocumentById(ctx context.Context, uuid string) (map[string]interface{}, error) {
-	log.Infof("start getting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+func (r *DocumentRepo) GetById(ctx context.Context, uuid string) (map[string]interface{}, error) {
+	log.Infof("retrieving document [%s] json from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -53,32 +55,35 @@ func (r *MongoDBRepo) GetDocumentById(ctx context.Context, uuid string) (map[str
 	err := collection.FindOne(ctx, bson.M{"_id": uuid}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Debugf("no document found by id [%s]", uuid)
-			return nil, fmt.Errorf("document not found")
+			return nil, fmt.Errorf("document [%s] json not found", uuid)
 		}
-		log.Debugf("error get json document[%s]: %+v", uuid, err)
-		return nil, fmt.Errorf("failed to get document: %+v", err)
+		log.Debugf("failed to retrieve document json: %+v", err)
+		return nil, fmt.Errorf("failed to retrieve document [%s] json", uuid)
 	}
 
-	log.Infof("end getting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+	log.Infof("document [%s] json retrieved successfully", uuid)
 
 	return result, nil
 }
 
-func (r *MongoDBRepo) DeleteDocumentById(ctx context.Context, uuid string) error {
-	log.Infof("start deleting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+func (r *DocumentRepo) DeleteById(ctx context.Context, uuid string) error {
+	log.Infof("deleting document [%s] json from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
 	if err != nil {
-		log.Debugf("error delete document by id [%s]: %+v", uuid, err)
-		return err
+		log.Debugf("failed to delete document json: %+v", err)
+		return fmt.Errorf("failed to delete document [%s] json", uuid)
 	}
 
-	log.Infof("end deleting document [%s] from database %s, collection %s", uuid, model.MongoDbName, model.MongoCollectionName)
+	if result.DeletedCount == 0 {
+		return fmt.Errorf("document [%s] not found", uuid)
+	}
+
+	log.Infof("document [%s] json deleted successfully", uuid)
 
 	return nil
 }

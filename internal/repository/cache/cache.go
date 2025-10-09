@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,22 +13,22 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 )
 
-var _ Client = (*CacheClientRepo)(nil)
+var _ Document = (*DocumentRepo)(nil)
 
-type CacheClientRepo struct {
+type DocumentRepo struct {
 	Cfg         *config.Config
 	RedisClient *redis.Client
 }
 
-func NewCacheClientRepo(cfg *config.Config, redisClient *redis.Client) *CacheClientRepo {
-	return &CacheClientRepo{
+func NewDocumentRepo(cfg *config.Config, redisClient *redis.Client) *DocumentRepo {
+	return &DocumentRepo{
 		Cfg:         cfg,
 		RedisClient: redisClient,
 	}
 }
 
-func (c *CacheClientRepo) Set(ctx context.Context, uuid, mime string, data interface{}, isFile bool) error {
-	log.Infof("start set document [%s] to cache", uuid)
+func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interface{}, isFile bool) error {
+	log.Infof("setting document [%s] to cache", uuid)
 
 	var (
 		file       []byte
@@ -53,66 +54,65 @@ func (c *CacheClientRepo) Set(ctx context.Context, uuid, mime string, data inter
 
 		file, err = json.Marshal(result)
 		if err != nil {
-			log.Debugf("error marshalling file: %+v", err)
-			return err
+			log.Debugf("failed to marshal document json: %+v", err)
+			return fmt.Errorf("failed to marshal document [%s] json", uuid)
 		}
 	}
 
-	err = c.RedisClient.Set(ctx, "file:data:"+uuid, file, c.Cfg.CacheTTL).Err()
+	err = r.RedisClient.Set(ctx, "file:data:"+uuid, file, r.Cfg.CacheTTL).Err()
 	if err != nil {
-		return err
+		log.Debugf("failed to store document data in cache: %+v", err)
+		return fmt.Errorf("failed to store document [%s] data", uuid)
 	}
 
 	metadata["type"] = mime
 	metadata["created"] = time.Now().Unix()
 
-	err = c.RedisClient.HSet(ctx, "file:meta:"+uuid, metadata).Err()
+	err = r.RedisClient.HSet(ctx, "file:meta:"+uuid, metadata).Err()
 	if err != nil {
-		log.Errorf("error setting metadata: %+v", err)
-		return err
+		log.Debugf("failed to store document metadata in cache: %+v", err)
+		return fmt.Errorf("failed to store document [%s] metadata in cache", uuid)
 	}
 
-	log.Infof("end set document [%s] to cache", uuid)
+	log.Infof("document [%s] successfully cached", uuid)
 
 	return err
 }
 
-func (c *CacheClientRepo) Get(ctx context.Context, uuid string) ([]byte, string, bool) {
-	log.Infof("start get document [%s] from cache", uuid)
+func (r *DocumentRepo) Get(ctx context.Context, uuid string) ([]byte, string, bool) {
+	log.Infof("retrieving document [%s] from cache", uuid)
 
-	file, err := c.RedisClient.Get(ctx, "file:data:"+uuid).Bytes()
+	file, err := r.RedisClient.Get(ctx, "file:data:"+uuid).Bytes()
 	if err != nil {
-		log.Debugf("error getting file data: %+v", err)
+		log.Debugf("failed to retrieve document data from cache: %+v", err)
 		return nil, "", false
 	}
 
-	meta, err := c.RedisClient.HGetAll(ctx, "file:meta:"+uuid).Result()
+	meta, err := r.RedisClient.HGetAll(ctx, "file:meta:"+uuid).Result()
 	if err != nil {
-		log.Debugf("error getting file meta: %+v", err)
+		log.Debugf("failed to retrieve document metadata from cache: %+v", err)
 		return nil, "", false
 	}
 
 	mime, ok := meta["type"]
 	if !ok {
-		log.Debugf("error to get mime: %+v", err)
+		log.Debug("document metadata missing MIME type")
 		return nil, "", false
 	}
 
-	log.Infof("end get document [%s] from cache", uuid)
+	log.Infof("document [%s] successfully retrieved from cache", uuid)
 
 	return file, mime, true
 }
 
-func (c *CacheClientRepo) Delete(ctx context.Context, uuid string) error {
-	log.Infof("start delete document [%s] from cache", uuid)
+func (r *DocumentRepo) Delete(ctx context.Context, uuid string) {
+	log.Infof("deleting document [%s] from cache", uuid)
 
-	err := c.RedisClient.Del(ctx, uuid).Err()
+	err := r.RedisClient.Del(ctx, uuid).Err()
 	if err != nil {
-		log.Debugf("failed to delete document: %+v", err)
-		return err
+		log.Debugf("failed to delete document from cache: %+v", err)
+		return
 	}
 
-	log.Infof("end delete document [%s] from cache", uuid)
-
-	return err
+	log.Infof("document [%s] successfully deleted from cache", uuid)
 }

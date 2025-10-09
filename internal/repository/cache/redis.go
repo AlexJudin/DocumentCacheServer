@@ -9,11 +9,6 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/config"
 )
 
-type User struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
 func ConnectToRedis(cfg *config.Config) (*redis.Client, error) {
 	var connStr strings.Builder
 

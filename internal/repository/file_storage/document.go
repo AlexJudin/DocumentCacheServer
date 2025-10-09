@@ -3,79 +3,80 @@ package file_storage
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/minio/minio-go/v7"
 	log "github.com/sirupsen/logrus"
 )
 
-var _ DocumentFile = (*DocumentFileRepo)(nil)
+var _ Document = (*DocumentRepo)(nil)
 
 const bucketName = "document-files"
 
-type DocumentFileRepo struct {
+type DocumentRepo struct {
 	Client     *minio.Client
 	bucketName string
 }
 
-func NewDocumentFileRepo(minioClient *minio.Client) *DocumentFileRepo {
-	return &DocumentFileRepo{
+func NewDocumentRepo(minioClient *minio.Client) *DocumentRepo {
+	return &DocumentRepo{
 		Client:     minioClient,
 		bucketName: bucketName,
 	}
 }
 
-func (m *DocumentFileRepo) Upload(ctx context.Context, documentName string, data []byte) error {
-	log.Infof("start upload file document [%s]", documentName)
+func (r *DocumentRepo) Upload(ctx context.Context, documentName string, data []byte) error {
+	log.Infof("uploading document [%s] file", documentName)
 
 	size := int64(len(data))
 
 	reader := bytes.NewReader(data)
 
-	_, err := m.Client.PutObject(ctx, m.bucketName, documentName, reader, size, minio.PutObjectOptions{
+	_, err := r.Client.PutObject(ctx, r.bucketName, documentName, reader, size, minio.PutObjectOptions{
 		ContentType: "application/octet-stream",
 	})
 	if err != nil {
-		log.Debugf("error upload file document [%s]: %+v", documentName, err)
-		return err
+		log.Debugf("failed to upload document file: %+v", err)
+		return fmt.Errorf("failed to upload document [%s] file", documentName)
 	}
 
-	log.Infof("end upload file document [%s]", documentName)
+	log.Infof("document [%s] file uploaded successfully", documentName)
 
 	return nil
 }
 
-func (m *DocumentFileRepo) Download(ctx context.Context, documentName string) ([]byte, error) {
-	log.Infof("start download file [%s]", documentName)
+func (r *DocumentRepo) Download(ctx context.Context, documentName string) ([]byte, error) {
+	log.Infof("downloading document [%s] file", documentName)
 
-	object, err := m.Client.GetObject(ctx, m.bucketName, documentName, minio.GetObjectOptions{})
+	object, err := r.Client.GetObject(ctx, r.bucketName, documentName, minio.GetObjectOptions{})
 	if err != nil {
-		log.Debugf("error download file [%s]: %+v", documentName, err)
-		return nil, err
+		log.Debugf("failed to get document file: %+v", err)
+		return nil, fmt.Errorf("failed to get document [%s] file", documentName)
 	}
 	defer object.Close()
 
 	data, err := io.ReadAll(object)
 	if err != nil {
-		log.Debugf("error download file [%s]: %+v", documentName, err)
-		return nil, err
+		log.Debugf("failed to read document file: %+v", err)
+		return nil, fmt.Errorf("failed to read document [%s] file", documentName)
 	}
 
-	log.Infof("end download file [%s]", documentName)
+	log.Infof("document [%s] file downloaded successfully", documentName)
 
 	return data, nil
 }
 
-func (m *DocumentFileRepo) Delete(ctx context.Context, documentName string) error {
-	log.Infof("start deleting file [%s]", documentName)
+func (r *DocumentRepo) Delete(ctx context.Context, documentName string) error {
+	log.Infof("deleting document [%s] file", documentName)
 
-	err := m.Client.RemoveObject(ctx, m.bucketName, documentName, minio.RemoveObjectOptions{})
+	err := r.Client.RemoveObject(ctx, r.bucketName, documentName, minio.RemoveObjectOptions{})
 	if err != nil {
-		log.Debugf("error deleting file [%s]: %+v", documentName, err)
-		return err
+		log.Debugf("failed to delete document file: %+v", err)
+		return fmt.Errorf("failed to delete document [%s] file", documentName)
 	}
 
-	log.Infof("end deleting file [%s]", documentName)
+	log.Infof("document [%s] file deleted successfully", documentName)
 
 	return nil
 }

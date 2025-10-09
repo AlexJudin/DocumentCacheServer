@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-type Client interface {
+type Document interface {
 	Set(ctx context.Context, key, mime string, data interface{}, isFile bool) error
 	Get(ctx context.Context, key string) ([]byte, string, bool)
-	Delete(ctx context.Context, key string) error
+	Delete(ctx context.Context, key string)
 }
