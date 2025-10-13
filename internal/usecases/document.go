@@ -8,23 +8,23 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 )
 
 var _ Document = (*DocumentUsecase)(nil)
 
 type DocumentUsecase struct {
 	Ctx         context.Context
-	DocumentDB  postgres.Document
+	DocumentDB  repository.Document
 	Cache       cache.Document
 	FileStorage filestorage.Document
 	MongoDB     mongodb.Document
 }
 
-func NewDocumentUsecase(db postgres.Document, cache cache.Document, mgdb mongodb.Document, fileStorage filestorage.Document) *DocumentUsecase {
+func NewDocumentUsecase(db repository.Document, cache cache.Document, mgdb mongodb.Document, fileStorage filestorage.Document) *DocumentUsecase {
 	return &DocumentUsecase{
 		Ctx:         context.Background(),
 		DocumentDB:  db,

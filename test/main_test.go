@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
 	"gorm.io/gorm"
 	"os"
 	"testing"
@@ -45,7 +46,7 @@ func initialize() error {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"))
 
-	db, err := postgres.ConnectDB(connStr)
+	db, err := client.ConnectDB(connStr)
 	if err != nil {
 		return err
 	}

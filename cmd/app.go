@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,32 +15,28 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
-	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 )
 
 func startApp(cfg *config.Config) {
 	connStr := cfg.GetDataSourceName()
-	db, err := postgres.ConnectDB(connStr)
+	db, err := client.ConnectDB(connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	connMgDbStr := cfg.GetMongoDBSourse()
-	mgDb, err := mongodb.NewMongoDBClient(connMgDbStr)
+	mgDb, err := client.NewMongoDBClient(connMgDbStr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer mgDb.Close()
 
-	redisClient, err := cache.ConnectToRedis(cfg)
+	redisClient, err := client.ConnectToRedis(cfg)
 	if err != nil {
 		log.Error("error connecting to redis")
 	}
 
-	fileClient, err := filestorage.NewFileStorageClient(cfg)
+	fileClient, err := client.NewFileStorageClient(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

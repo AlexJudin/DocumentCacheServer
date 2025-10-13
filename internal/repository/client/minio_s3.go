@@ -1,8 +1,9 @@
-package file_storage
+package client
 
 import (
 	"context"
 	"fmt"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
 	"time"
 
 	"github.com/minio/minio-go/v7"
@@ -13,7 +14,7 @@ import (
 )
 
 var buckets = []string{
-	bucketName,
+	file_storage.bucketName,
 }
 
 func NewFileStorageClient(cfg *config.Config) (*minio.Client, error) {
