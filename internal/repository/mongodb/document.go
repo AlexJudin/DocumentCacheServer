@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
@@ -54,9 +56,10 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) (map[string]int
 	var result map[string]interface{}
 	err := collection.FindOne(ctx, bson.M{"_id": uuid}).Decode(&result)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, fmt.Errorf("document [%s] json not found", uuid)
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, custom_error.ErrDocumentNotFound
 		}
+
 		log.Debugf("failed to retrieve document json: %+v", err)
 		return nil, fmt.Errorf("failed to retrieve document [%s] json", uuid)
 	}
@@ -80,7 +83,7 @@ func (r *DocumentRepo) DeleteById(ctx context.Context, uuid string) error {
 	}
 
 	if result.DeletedCount == 0 {
-		return fmt.Errorf("document [%s] not found", uuid)
+		return custom_error.ErrDocumentNotFound
 	}
 
 	log.Infof("document [%s] json deleted successfully", uuid)

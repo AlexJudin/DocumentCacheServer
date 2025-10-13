@@ -10,19 +10,19 @@ import (
 var _ Authorization = (*AuthUsecase)(nil)
 
 type AuthUsecase struct {
-	DB          postgres.User
+	UserDB      postgres.User
 	ServiceAuth service.AuthService
 }
 
 func NewAuthUsecase(db postgres.User, serviceAuth service.AuthService) *AuthUsecase {
 	return &AuthUsecase{
-		DB:          db,
+		UserDB:      db,
 		ServiceAuth: serviceAuth,
 	}
 }
 
 func (u *AuthUsecase) AuthorizationUser(login string, password string) (entity.Tokens, error) {
-	user, err := u.DB.GetUserByLogin(login)
+	user, err := u.UserDB.GetByLogin(login)
 	if err != nil {
 		return entity.Tokens{}, err
 	}

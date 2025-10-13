@@ -1,11 +1,13 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
@@ -65,6 +67,11 @@ func (r *DocumentRepo) GetById(uuid string) (model.MetaDocument, error) {
 		Where("uuid = ?", uuid).
 		First(&document).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Infof("document [%s] metadata not found", uuid)
+			return document, custom_error.ErrDocumentNotFound
+		}
+
 		log.Debugf("failed to retrieve document: %+v", err)
 		return document, fmt.Errorf("failed to retrieve document [%s] metadata", uuid)
 	}
@@ -81,6 +88,11 @@ func (r *DocumentRepo) DeleteById(id string) error {
 		Where("uuid = ?", id).
 		Delete(&model.MetaDocument{}).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Infof("document [%s] metadata not found", id)
+			return custom_error.ErrDocumentNotFound
+		}
+
 		log.Debugf("failed to delete document metadata: %+v", err)
 		return fmt.Errorf("failed to delete document [%s] metadata", id)
 	}

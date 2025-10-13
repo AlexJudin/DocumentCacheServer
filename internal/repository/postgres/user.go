@@ -18,7 +18,7 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 	return &UserRepo{Db: db}
 }
 
-func (r *UserRepo) SaveUser(user model.User) error {
+func (r *UserRepo) Save(user model.User) error {
 	log.Infof("start saving user with login [%s]", user.Login)
 
 	err := r.Db.Create(&user).Error
@@ -32,7 +32,7 @@ func (r *UserRepo) SaveUser(user model.User) error {
 	return nil
 }
 
-func (r *UserRepo) GetUserByLogin(login string) (model.User, error) {
+func (r *UserRepo) GetByLogin(login string) (model.User, error) {
 	log.Infof("start getting user by login [%s]", login)
 
 	var user model.User

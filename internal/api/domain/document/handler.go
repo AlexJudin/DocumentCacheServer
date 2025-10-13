@@ -3,6 +3,7 @@ package document
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/common"
+	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
@@ -256,7 +258,14 @@ func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request
 	}
 
 	resp, mime, err := h.uc.GetDocumentById(idDoc)
-	if err != nil {
+	switch {
+	case errors.Is(err, custom_error.ErrDocumentNotFound):
+		log.Errorf("get document by id error: %+v", err)
+		messageError = fmt.Sprintf("Документ [%s] не найден.", idDoc)
+
+		common.ApiError(http.StatusNotFound, messageError, w)
+		return
+	case err != nil:
 		log.Errorf("get document by id error: %+v", err)
 		messageError = fmt.Sprintf("Ошибка сервера, не удалось получить документ [%s]. Попробуйте позже или обратитесь в тех. поддержку.", idDoc)
 
@@ -304,7 +313,14 @@ func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Requ
 	}
 
 	err := h.uc.DeleteDocumentById(idDoc)
-	if err != nil {
+	switch {
+	case errors.Is(err, custom_error.ErrDocumentNotFound):
+		log.Errorf("delete document by id error: %+v", err)
+		messageError = fmt.Sprintf("Документ [%s] не найден.", idDoc)
+
+		common.ApiError(http.StatusNotFound, messageError, w)
+		return
+	case err != nil:
 		log.Errorf("delete document by id error: %+v", err)
 		messageError = fmt.Sprintf("Ошибка сервера, не удалось удалить документ [%s]. Попробуйте позже или обратитесь в тех. поддержку.", idDoc)
 

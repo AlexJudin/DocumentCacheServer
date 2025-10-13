@@ -2,16 +2,16 @@ package test
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 
-	"github.com/AlexJudin/wallet_java_code/internal/api/controller/wallet"
-	"github.com/AlexJudin/wallet_java_code/internal/repository"
-	"github.com/AlexJudin/wallet_java_code/internal/usecases"
+	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain/document"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 
 type WalletTest struct {
 	db      *gorm.DB
-	handler wallet.WalletHandler
+	handler document.DocumentHandler
 }
 
 func TestMain(m *testing.M) {
@@ -45,18 +45,18 @@ func initialize() error {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"))
 
-	db, err := repository.ConnectDB(connStr)
+	db, err := postgres.ConnectDB(connStr)
 	if err != nil {
 		return err
 	}
 	walletTest.db = db
 
 	// init repository
-	repo := repository.NewWalletRepo(db)
+	repo := postgres.NewDocumentRepo(db)
 
 	// init usecases
-	walletUC := usecases.NewWalletUsecase(repo)
-	walletTest.handler = wallet.NewWalletHandler(walletUC)
+	docUC := usecases.NewDocumentUsecase(repo)
+	walletTest.handler = document.NewDocumentHandler(docUC)
 
 	return nil
 }

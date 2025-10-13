@@ -12,6 +12,10 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/config"
 )
 
+var buckets = []string{
+	bucketName,
+}
+
 func NewFileStorageClient(cfg *config.Config) (*minio.Client, error) {
 	client, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
@@ -33,17 +37,19 @@ func ensureBucketExists(client *minio.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	exists, err := client.BucketExists(ctx, bucketName)
-	if err != nil {
-		return fmt.Errorf("failed to check bucket existence: %+v", err)
-	}
-
-	if !exists {
-		err = client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	for _, bucket := range buckets {
+		exists, err := client.BucketExists(ctx, bucket)
 		if err != nil {
-			return fmt.Errorf("failed to create bucket: %+v", err)
+			return fmt.Errorf("failed to check bucket existence: %+v", err)
 		}
-		log.Infof("Bucket '%s' created successfully")
+
+		if !exists {
+			err = client.MakeBucket(ctx, bucket, minio.MakeBucketOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to create bucket: %+v", err)
+			}
+			log.Infof("bucket '%s' created successfully", bucket)
+		}
 	}
 
 	return nil

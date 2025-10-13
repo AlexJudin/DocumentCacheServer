@@ -18,7 +18,7 @@ var _ Document = (*DocumentUsecase)(nil)
 
 type DocumentUsecase struct {
 	Ctx         context.Context
-	DB          postgres.Document
+	DocumentDB  postgres.Document
 	Cache       cache.Document
 	FileStorage filestorage.Document
 	MongoDB     mongodb.Document
@@ -27,7 +27,7 @@ type DocumentUsecase struct {
 func NewDocumentUsecase(db postgres.Document, cache cache.Document, mgdb mongodb.Document, fileStorage filestorage.Document) *DocumentUsecase {
 	return &DocumentUsecase{
 		Ctx:         context.Background(),
-		DB:          db,
+		DocumentDB:  db,
 		Cache:       cache,
 		FileStorage: fileStorage,
 		MongoDB:     mgdb,
@@ -45,10 +45,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 			return err
 		}
 
-		err = t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
-		if err != nil {
-			return err
-		}
+		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
 	}
 
 	if len(document.Json) != 0 {
@@ -57,13 +54,10 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 			return err
 		}
 
-		err = t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
-		if err != nil {
-			return err
-		}
+		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
 	}
 
-	err := t.DB.Save(document.Meta)
+	err := t.DocumentDB.Save(document.Meta)
 	if err != nil {
 		return err
 	}
@@ -72,7 +66,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 }
 
 func (t *DocumentUsecase) GetDocumentsList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
-	return t.DB.GetList(req)
+	return t.DocumentDB.GetList(req)
 }
 
 func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
@@ -81,7 +75,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 		return data, mime, nil
 	}
 
-	metaDoc, err := t.DB.GetById(uuid)
+	metaDoc, err := t.DocumentDB.GetById(uuid)
 	if err != nil {
 		return nil, "", err
 	}
@@ -125,5 +119,5 @@ func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
 
 	t.Cache.Delete(t.Ctx, uuid)
 
-	return t.DB.DeleteById(uuid)
+	return t.DocumentDB.DeleteById(uuid)
 }

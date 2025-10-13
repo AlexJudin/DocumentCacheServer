@@ -3,7 +3,6 @@ package cache
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -27,7 +26,7 @@ func NewDocumentRepo(cfg *config.Config, redisClient *redis.Client) *DocumentRep
 	}
 }
 
-func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interface{}, isFile bool) error {
+func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interface{}, isFile bool) {
 	log.Infof("setting document [%s] to cache", uuid)
 
 	var (
@@ -55,14 +54,14 @@ func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interfac
 		file, err = json.Marshal(result)
 		if err != nil {
 			log.Debugf("failed to marshal document json: %+v", err)
-			return fmt.Errorf("failed to marshal document [%s] json", uuid)
+			return
 		}
 	}
 
 	err = r.RedisClient.Set(ctx, "file:data:"+uuid, file, r.Cfg.CacheTTL).Err()
 	if err != nil {
 		log.Debugf("failed to store document data in cache: %+v", err)
-		return fmt.Errorf("failed to store document [%s] data", uuid)
+		return
 	}
 
 	metadata["type"] = mime
@@ -71,12 +70,10 @@ func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interfac
 	err = r.RedisClient.HSet(ctx, "file:meta:"+uuid, metadata).Err()
 	if err != nil {
 		log.Debugf("failed to store document metadata in cache: %+v", err)
-		return fmt.Errorf("failed to store document [%s] metadata in cache", uuid)
+		return
 	}
 
 	log.Infof("document [%s] successfully cached", uuid)
-
-	return err
 }
 
 func (r *DocumentRepo) Get(ctx context.Context, uuid string) ([]byte, string, bool) {

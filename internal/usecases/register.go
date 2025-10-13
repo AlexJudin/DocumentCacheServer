@@ -10,13 +10,13 @@ import (
 var _ Register = (*RegisterUsecase)(nil)
 
 type RegisterUsecase struct {
-	DB          postgres.User
+	UserDB      postgres.User
 	ServiceAuth service.AuthService
 }
 
 func NewRegisterUsecase(db postgres.User, serviceAuth service.AuthService) *RegisterUsecase {
 	return &RegisterUsecase{
-		DB:          db,
+		UserDB:      db,
 		ServiceAuth: serviceAuth,
 	}
 }
@@ -36,7 +36,7 @@ func (u *RegisterUsecase) RegisterUser(token, login, password string) error {
 		return custom_error.ErrInvalidPassword
 	}
 
-	user, err := u.DB.GetUserByLogin(login)
+	user, err := u.UserDB.GetByLogin(login)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (u *RegisterUsecase) RegisterUser(token, login, password string) error {
 		Hash:  u.ServiceAuth.GenerateHashPassword(password),
 	}
 
-	err = u.DB.SaveUser(newUser)
+	err = u.UserDB.Save(newUser)
 	if err != nil {
 		return err
 	}

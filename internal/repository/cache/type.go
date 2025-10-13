@@ -5,7 +5,7 @@ import (
 )
 
 type Document interface {
-	Set(ctx context.Context, key, mime string, data interface{}, isFile bool) error
+	Set(ctx context.Context, key, mime string, data interface{}, isFile bool)
 	Get(ctx context.Context, key string) ([]byte, string, bool)
 	Delete(ctx context.Context, key string)
 }
