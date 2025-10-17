@@ -10,23 +10,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var _ Document = (*DocumentRepo)(nil)
+const BucketName = "document-files"
 
-const bucketName = "document-files"
-
-type DocumentRepo struct {
+type DocumentFileRepo struct {
 	Client     *minio.Client
 	bucketName string
 }
 
-func NewDocumentRepo(minioClient *minio.Client) *DocumentRepo {
-	return &DocumentRepo{
+func NewDocumentFileRepo(minioClient *minio.Client) *DocumentFileRepo {
+	return &DocumentFileRepo{
 		Client:     minioClient,
-		bucketName: bucketName,
+		bucketName: BucketName,
 	}
 }
 
-func (r *DocumentRepo) Upload(ctx context.Context, documentName string, data []byte) error {
+func (r *DocumentFileRepo) Upload(ctx context.Context, documentName string, data []byte) error {
 	log.Infof("uploading document [%s] file", documentName)
 
 	size := int64(len(data))
@@ -46,7 +44,7 @@ func (r *DocumentRepo) Upload(ctx context.Context, documentName string, data []b
 	return nil
 }
 
-func (r *DocumentRepo) Download(ctx context.Context, documentName string) ([]byte, error) {
+func (r *DocumentFileRepo) Download(ctx context.Context, documentName string) ([]byte, error) {
 	log.Infof("downloading document [%s] file", documentName)
 
 	object, err := r.Client.GetObject(ctx, r.bucketName, documentName, minio.GetObjectOptions{})
@@ -67,7 +65,7 @@ func (r *DocumentRepo) Download(ctx context.Context, documentName string) ([]byt
 	return data, nil
 }
 
-func (r *DocumentRepo) Delete(ctx context.Context, documentName string) error {
+func (r *DocumentFileRepo) Delete(ctx context.Context, documentName string) error {
 	log.Infof("deleting document [%s] file", documentName)
 
 	err := r.Client.RemoveObject(ctx, r.bucketName, documentName, minio.RemoveObjectOptions{})

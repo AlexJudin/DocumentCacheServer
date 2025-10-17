@@ -12,17 +12,15 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
-var _ Document = (*DocumentRepo)(nil)
-
-type DocumentRepo struct {
+type DocumentMetaRepo struct {
 	Db *gorm.DB
 }
 
-func NewDocumentRepo(db *gorm.DB) *DocumentRepo {
-	return &DocumentRepo{Db: db}
+func NewDocumentMetaRepo(db *gorm.DB) *DocumentMetaRepo {
+	return &DocumentMetaRepo{Db: db}
 }
 
-func (r *DocumentRepo) Save(document *model.MetaDocument) error {
+func (r *DocumentMetaRepo) Save(document *model.MetaDocument) error {
 	log.Infof("saving document [%s] metadata to database", document.UUID)
 
 	err := r.Db.Create(&document).Error
@@ -36,7 +34,7 @@ func (r *DocumentRepo) Save(document *model.MetaDocument) error {
 	return nil
 }
 
-func (r *DocumentRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
+func (r *DocumentMetaRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
 	log.Info("retrieving documents list from database")
 
 	documents := make([]model.MetaDocument, req.Limit)
@@ -58,7 +56,7 @@ func (r *DocumentRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocu
 	return documents, nil
 }
 
-func (r *DocumentRepo) GetById(uuid string) (model.MetaDocument, error) {
+func (r *DocumentMetaRepo) GetById(uuid string) (model.MetaDocument, error) {
 	log.Infof("retrieving document [%s] metadata", uuid)
 
 	var document model.MetaDocument
@@ -81,7 +79,7 @@ func (r *DocumentRepo) GetById(uuid string) (model.MetaDocument, error) {
 	return document, nil
 }
 
-func (r *DocumentRepo) DeleteById(id string) error {
+func (r *DocumentMetaRepo) DeleteById(id string) error {
 	log.Infof("deleting document [%s] metadata", id)
 
 	err := r.Db.Model(&model.MetaDocument{}).

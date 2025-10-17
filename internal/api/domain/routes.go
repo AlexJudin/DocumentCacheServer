@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository"
 	"gorm.io/gorm"
 	"time"
 
@@ -16,8 +17,6 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain/register"
 	"github.com/AlexJudin/DocumentCacheServer/internal/api/middleware"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
-	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
@@ -33,20 +32,14 @@ func AddRoutes(config *config.Config,
 	authService := service.NewAuthService(config, db)
 
 	// init postgres repository
-	repoDocument := postgres.NewDocumentRepo(db)
+	repoDocument := repository.NewDocumentRepo(db, mgDbClient, fileStorageClient)
 	repoUser := postgres.NewUserRepo(db)
 
 	// init cacheClient
 	cacheClient := cache.NewDocumentRepo(config, redisClient)
 
-	// init mongoDB repository
-	repoJson := mongodb.NewDocumentRepo(mgDbClient)
-
-	// init file storage client
-	fileRepo := filestorage.NewDocumentRepo(fileStorageClient)
-
 	// init usecases
-	docsUC := usecases.NewDocumentUsecase(repoDocument, cacheClient, repoJson, fileRepo)
+	docsUC := usecases.NewDocumentUsecase(repoDocument, cacheClient)
 	docsHandler := document.NewDocumentHandler(docsUC)
 
 	registerUC := usecases.NewRegisterUsecase(repoUser, authService)

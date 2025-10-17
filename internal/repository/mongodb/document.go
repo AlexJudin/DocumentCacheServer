@@ -14,19 +14,17 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
-var _ Document = (*DocumentRepo)(nil)
-
-type DocumentRepo struct {
+type DocumentJsonRepo struct {
 	Client *mongo.Client
 }
 
-func NewDocumentRepo(client *mongo.Client) *DocumentRepo {
-	return &DocumentRepo{
+func NewDocumentJsonRepo(client *mongo.Client) *DocumentJsonRepo {
+	return &DocumentJsonRepo{
 		Client: client,
 	}
 }
 
-func (r *DocumentRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
+func (r *DocumentJsonRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
 	log.Infof("saving document [%s] json to database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
@@ -46,7 +44,7 @@ func (r *DocumentRepo) Save(ctx context.Context, uuid string, jsonDoc map[string
 	return nil
 }
 
-func (r *DocumentRepo) GetById(ctx context.Context, uuid string) (map[string]interface{}, error) {
+func (r *DocumentJsonRepo) GetById(ctx context.Context, uuid string) (map[string]interface{}, error) {
 	log.Infof("retrieving document [%s] json from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
@@ -69,7 +67,7 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) (map[string]int
 	return result, nil
 }
 
-func (r *DocumentRepo) DeleteById(ctx context.Context, uuid string) error {
+func (r *DocumentJsonRepo) DeleteById(ctx context.Context, uuid string) error {
 	log.Infof("deleting document [%s] json from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)

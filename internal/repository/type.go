@@ -1,13 +1,15 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
 type Document interface {
-	Save(document *model.MetaDocument) error
+	Save(ctx context.Context, document *entity.Document) error
 	GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error)
-	GetById(uuid string) (model.MetaDocument, error)
-	DeleteById(uuid string) error
+	GetById(ctx context.Context, uuid string) ([]byte, string, error)
+	DeleteById(ctx context.Context, uuid string) error
 }

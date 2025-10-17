@@ -2,35 +2,27 @@ package usecases
 
 import (
 	"context"
-	"encoding/json"
-
 	"github.com/google/uuid"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
-	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
 )
 
 var _ Document = (*DocumentUsecase)(nil)
 
 type DocumentUsecase struct {
-	Ctx         context.Context
-	DocumentDB  repository.Document
-	Cache       cache.Document
-	FileStorage filestorage.Document
-	MongoDB     mongodb.Document
+	Ctx                context.Context
+	DocumentRepository repository.Document
+	Cache              cache.Document
 }
 
-func NewDocumentUsecase(db repository.Document, cache cache.Document, mgdb mongodb.Document, fileStorage filestorage.Document) *DocumentUsecase {
+func NewDocumentUsecase(docRepo repository.Document, cache cache.Document) *DocumentUsecase {
 	return &DocumentUsecase{
-		Ctx:         context.Background(),
-		DocumentDB:  db,
-		Cache:       cache,
-		FileStorage: fileStorage,
-		MongoDB:     mgdb,
+		Ctx:                context.Background(),
+		DocumentRepository: docRepo,
+		Cache:              cache,
 	}
 }
 
@@ -40,24 +32,14 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 	document.Meta.UUID = uuidDoc
 
 	if document.Meta.File {
-		err := t.FileStorage.Upload(t.Ctx, uuidDoc, document.File.Content)
-		if err != nil {
-			return err
-		}
-
 		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
 	}
 
 	if len(document.Json) != 0 {
-		err := t.MongoDB.Save(t.Ctx, uuidDoc, document.Json)
-		if err != nil {
-			return err
-		}
-
 		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
 	}
 
-	err := t.DocumentDB.Save(document.Meta)
+	err := t.DocumentRepository.Save(t.Ctx, document)
 	if err != nil {
 		return err
 	}
@@ -66,7 +48,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 }
 
 func (t *DocumentUsecase) GetDocumentsList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
-	return t.DocumentDB.GetList(req)
+	return t.DocumentRepository.GetList(req)
 }
 
 func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
@@ -75,49 +57,16 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 		return data, mime, nil
 	}
 
-	metaDoc, err := t.DocumentDB.GetById(uuid)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if metaDoc.File {
-		file, err := t.FileStorage.Download(t.Ctx, metaDoc.UUID)
-		if err != nil {
-			return nil, "", err
-		}
-
-		return file, metaDoc.Mime, nil
-	}
-
-	jsonDocMap, err := t.MongoDB.GetById(t.Ctx, uuid)
-	if err != nil {
-		return nil, "", err
-	}
-
-	result := entity.ApiResponse{
-		Data: jsonDocMap,
-	}
-
-	jsonDoc, err := json.Marshal(result)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return jsonDoc, metaDoc.Mime, nil
+	return t.DocumentRepository.GetById(t.Ctx, uuid)
 }
 
 func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
-	err := t.FileStorage.Delete(t.Ctx, uuid)
-	if err != nil {
-		return err
-	}
-
-	err = t.MongoDB.DeleteById(t.Ctx, uuid)
+	err := t.DocumentRepository.DeleteById(t.Ctx, uuid)
 	if err != nil {
 		return err
 	}
 
 	t.Cache.Delete(t.Ctx, uuid)
 
-	return t.DocumentDB.DeleteById(uuid)
+	return nil
 }

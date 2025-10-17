@@ -53,7 +53,7 @@ func initialize() error {
 	walletTest.db = db
 
 	// init repository
-	repo := postgres.NewDocumentRepo(db)
+	repo := postgres.NewDocumentMetaRepo(db)
 
 	// init usecases
 	docUC := usecases.NewDocumentUsecase(repo)
