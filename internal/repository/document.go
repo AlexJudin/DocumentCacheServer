@@ -101,18 +101,31 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string
 
 // DeleteById - для удаления документа используется паттерн SAGA
 func (r *DocumentRepo) DeleteById(ctx context.Context, uuid string) error {
-	err := r.MetaStorage.DeleteById(uuid)
+	metaDoc, err := r.MetaStorage.GetById(uuid)
 	if err != nil {
 		return err
 	}
 
-	err = r.FileStorage.Delete(ctx, uuid)
+	err = r.MetaStorage.DeleteById(uuid)
 	if err != nil {
 		return err
 	}
 
-	err = r.JsonStorage.DeleteById(ctx, uuid)
-	if err != nil {
+	if metaDoc.File {
+		if err = r.FileStorage.Delete(ctx, uuid); err != nil {
+			if compErr := r.MetaStorage.Save(&metaDoc); compErr != nil {
+				log.Errorf("compensation failed: %+v", compErr)
+			}
+			return err
+		}
+
+		return nil
+	}
+
+	if err = r.JsonStorage.DeleteById(ctx, uuid); err != nil {
+		if compErr := r.MetaStorage.Save(&metaDoc); compErr != nil {
+			log.Errorf("compensation failed: %+v", compErr)
+		}
 		return err
 	}
 
