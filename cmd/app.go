@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/api/domain"
+	"github.com/AlexJudin/DocumentCacheServer/internal/domain/controller"
 )
 
 func startApp(cfg *config.Config) {
@@ -42,7 +42,7 @@ func startApp(cfg *config.Config) {
 	}
 
 	r := chi.NewRouter()
-	domain.AddRoutes(cfg, db, mgDb.Client, redisClient, fileClient, r)
+	controller.AddRoutes(cfg, db, mgDb.Client, redisClient, fileClient, r)
 
 	startHTTPServer(cfg, r)
 }

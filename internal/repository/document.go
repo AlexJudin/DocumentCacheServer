@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/minio/minio-go/v7"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
@@ -19,39 +20,44 @@ var _ Document = (*DocumentRepo)(nil)
 
 // DocumentRepo - используется паттерн SAGA
 type DocumentRepo struct {
-	DB          *postgres.DocumentMetaRepo
+	MetaStorage *postgres.DocumentMetaRepo
 	JsonStorage *mongodb.DocumentJsonRepo
 	FileStorage *filestorage.DocumentFileRepo
 }
 
 func NewDocumentRepo(db *gorm.DB, mongoClient *mongo.Client, minioClient *minio.Client) *DocumentRepo {
 	return &DocumentRepo{
-		DB:          postgres.NewDocumentMetaRepo(db),
+		MetaStorage: postgres.NewDocumentMetaRepo(db),
 		JsonStorage: mongodb.NewDocumentJsonRepo(mongoClient),
 		FileStorage: filestorage.NewDocumentFileRepo(minioClient),
 	}
 }
 
+// Save - для сохранения документа используется паттерн SAGA
 func (r *DocumentRepo) Save(ctx context.Context, document *entity.Document) error {
 	uuidDoc := document.Meta.UUID
 
-	err := r.DB.Save(document.Meta)
+	err := r.MetaStorage.Save(document.Meta)
 	if err != nil {
 		return err
 	}
 
 	if document.Meta.File {
-		err = r.FileStorage.Upload(ctx, uuidDoc, document.File.Content)
-		if err != nil {
+		if err = r.FileStorage.Upload(ctx, uuidDoc, document.File.Content); err != nil {
+			if compErr := r.MetaStorage.DeleteById(uuidDoc); compErr != nil {
+				log.Errorf("compensation failed: %+v", compErr)
+			}
 			return err
 		}
+
+		return nil
 	}
 
-	if len(document.Json) != 0 {
-		err = r.JsonStorage.Save(ctx, uuidDoc, document.Json)
-		if err != nil {
-			return err
+	if err = r.JsonStorage.Save(ctx, uuidDoc, document.Json); err != nil {
+		if compErr := r.MetaStorage.DeleteById(uuidDoc); compErr != nil {
+			log.Errorf("compensation failed: %+v", compErr)
 		}
+		return err
 	}
 
 	return nil
@@ -62,7 +68,7 @@ func (r *DocumentRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocu
 }
 
 func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string, error) {
-	metaDoc, err := r.DB.GetById(uuid)
+	metaDoc, err := r.MetaStorage.GetById(uuid)
 	if err != nil {
 		return nil, "", err
 	}
@@ -93,8 +99,9 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string
 	return jsonDoc, metaDoc.Mime, nil
 }
 
+// DeleteById - для удаления документа используется паттерн SAGA
 func (r *DocumentRepo) DeleteById(ctx context.Context, uuid string) error {
-	err := r.DB.DeleteById(uuid)
+	err := r.MetaStorage.DeleteById(uuid)
 	if err != nil {
 		return err
 	}
