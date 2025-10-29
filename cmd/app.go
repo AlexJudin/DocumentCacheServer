@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/domain/controller"
+	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
 )
 
 func startApp(cfg *config.Config) {
