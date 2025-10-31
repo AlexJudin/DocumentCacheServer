@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	walletTest WalletTest
+	documentTest DocumentTest
 )
 
-type WalletTest struct {
+type DocumentTest struct {
 	db      *gorm.DB
 	handler document.DocumentHandler
 }
@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 }
 
 func initialize() error {
-	err := godotenv.Load("../config/test_config.env")
+	err := godotenv.Load("../config/config_test.env")
 	if err != nil {
 		return err
 	}
@@ -50,27 +50,27 @@ func initialize() error {
 	if err != nil {
 		return err
 	}
-	walletTest.db = db
+	documentTest.db = db
 
 	// init repository
 	repo := postgres.NewDocumentMetaRepo(db)
 
 	// init usecases
-	docUC := usecases.NewDocumentUsecase(repo)
-	walletTest.handler = document.NewDocumentHandler(docUC)
+	docsUC := usecases.NewDocumentUsecase(repo)
+	documentTest.handler = document.NewDocumentHandler(docsUC)
 
 	return nil
 }
 
 func truncateTable(db *gorm.DB) {
-	err := db.Exec(`TRUNCATE payment_operations`).Error
+	err := db.Exec(`TRUNCATE meta_documents`).Error
 	if err != nil {
 		log.Fatalf("error truncate table: %+v", err)
 	}
 }
 
 func closeDB() error {
-	dbInstance, err := walletTest.db.DB()
+	dbInstance, err := documentTest.db.DB()
 	if err != nil {
 		return err
 	}

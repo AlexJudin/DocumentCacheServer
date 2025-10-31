@@ -1,14 +1,28 @@
 services:
-  web:
-    build: .
+  doc_serv:
     env_file:
       - .env
+    build:
+      context: .
+      args:
+         APP_NAME: ${APP_NAME}
+         VERSION: ${VERSION}
+         BUILD_TIME: ${BUILD_TIME}
     ports:
       - "${PORT}:7540"
-    volumes:
-      - .:/usr/src/app
-    command: go run cmd/main.go
-  db:
+    networks:
+      - doc_serv_network
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      mongodb:
+        condition: service_started
+      minio:
+        condition: service_started
+
+  postgres:
     image: postgres:alpine
     environment:
       - POSTGRES_USER=${DB_USER}
@@ -18,6 +32,9 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - ./data/postgresql:/var/lib/postgresql/data
+    networks:
+      - doc_serv_network
+
   redis:
     image: redis:latest
     container_name: redis_container
@@ -27,6 +44,9 @@ services:
       - "${REDIS_PORT}:6379"
     volumes:
       - ./data/redisdata:/data
+    networks:
+      - doc_serv_network
+
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -35,7 +55,8 @@ services:
     volumes:
       - ./data/mongodb_data:/data/db
     networks:
-      - mongo-network
+      - doc_serv_network
+
   minio:
     image: minio/minio:latest
     container_name: file_storage
@@ -49,16 +70,14 @@ services:
     volumes:
       - ./data/minio_data:/data
     networks:
-      - minio_network
+      - doc_serv_network
 
 volumes:
-  postgres-db:
+  postgresql:
   mongodb_data:
   minio_data:
     driver: local
 
 networks:
-  mongo-network:
-    driver: bridge
-  minio_network:
+  doc_serv_network:
     driver: bridge

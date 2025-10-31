@@ -17,9 +17,9 @@ RUN go mod download
 COPY . .
 
 # Аргументы для сборки
-ARG APP_NAME=doc_serv
-ARG VERSION=1.0.0
-ARG BUILD_TIME=unknown
+ARG APP_NAME=${APP_NAME}
+ARG VERSION=${VERSION}
+ARG BUILD_TIME=${BUILD_TIME}
 
 # Собираем приложение
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \

@@ -29,6 +29,7 @@ type Config struct {
 }
 
 type ConfigDB struct {
+	Host     string
 	Port     string
 	User     string
 	Password string
@@ -86,6 +87,7 @@ func New() (*Config, error) {
 	cfg.LogLevel = logLevel
 
 	dbCfg := ConfigDB{
+		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		User:     os.Getenv("DB_USER"),
 		Password: os.Getenv("DB_PASSWORD"),
@@ -147,8 +149,8 @@ func New() (*Config, error) {
 }
 
 func (c *Config) GetDataSourceName() string {
-	str := fmt.Sprintf("host=localhost port=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.ConfigDB.Port, c.ConfigDB.User, c.ConfigDB.Password, c.ConfigDB.DBName)
+	str := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.ConfigDB.Host, c.ConfigDB.Port, c.ConfigDB.User, c.ConfigDB.Password, c.ConfigDB.DBName)
 
 	return str
 }
