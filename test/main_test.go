@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/AlexJudin/DocumentCacheServer/internal/domain/controller/document"
+	"github.com/AlexJudin/DocumentCacheServer/internal/controller/http/document"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"

@@ -449,7 +449,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:7540",
-	BasePath:         "/controller",
+	BasePath:         "/http",
 	Schemes:          []string{},
 	Title:            "Document Cache Server API",
 	Description:      "API для управления документами и кэширования",

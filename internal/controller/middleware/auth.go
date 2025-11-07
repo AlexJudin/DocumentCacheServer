@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/AlexJudin/DocumentCacheServer/internal/domain/common"
+	"github.com/AlexJudin/DocumentCacheServer/internal/controller/common"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 )
 
