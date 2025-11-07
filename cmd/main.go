@@ -19,7 +19,7 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host localhost:7540
-// @BasePath /http
+// @BasePath /api
 // @query.collection.format multi
 
 // @securityDefinitions.apikey BearerAuth

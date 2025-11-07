@@ -20,7 +20,7 @@ func TestGetWalletBalanceByUUIDWhenOk(t *testing.T) {
 		return
 	}
 
-	req := httptest.NewRequest("GET", "/http/v1/wallets/?WALLET_UUID=ec82ea03-2b53-4258-ba87-a7efae979c43", nil)
+	req := httptest.NewRequest("GET", "/api/v1/wallets/?WALLET_UUID=ec82ea03-2b53-4258-ba87-a7efae979c43", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.GetWalletBalanceByUUID)
@@ -39,7 +39,7 @@ func TestGetWalletBalanceByUUIDWhenOk(t *testing.T) {
 func TestGetWalletBalanceByUUIDWhenWalletUUIDIsEmpty(t *testing.T) {
 	truncateTable(walletTest.db)
 
-	req := httptest.NewRequest("GET", "/http/v1/wallets/?WALLET_UUID=", nil)
+	req := httptest.NewRequest("GET", "/api/v1/wallets/?WALLET_UUID=", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.GetWalletBalanceByUUID)
@@ -58,7 +58,7 @@ func TestGetWalletBalanceByUUIDWhenWalletUUIDIsEmpty(t *testing.T) {
 func TestGetWalletBalanceByUUIDWhenMissingWalletUUID(t *testing.T) {
 	truncateTable(walletTest.db)
 
-	req := httptest.NewRequest("GET", "/http/v1/wallets/", nil)
+	req := httptest.NewRequest("GET", "/api/v1/wallets/", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.GetWalletBalanceByUUID)
@@ -78,7 +78,7 @@ func TestCreateOperationWhenOk(t *testing.T) {
 	truncateTable(walletTest.db)
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "operationType":"deposit", "amount": 4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -92,7 +92,7 @@ func TestCreateOperationWhenOk(t *testing.T) {
 func TestCreateOperationWhenBodyIsEmpty(t *testing.T) {
 	truncateTable(walletTest.db)
 
-	req := httptest.NewRequest("POST", "/http/v1/wallet", nil)
+	req := httptest.NewRequest("POST", "/api/v1/wallet", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -112,7 +112,7 @@ func TestCreateOperationWhenUncorrectBody(t *testing.T) {
 	truncateTable(walletTest.db)
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "operationType":1, "amount": 4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -132,7 +132,7 @@ func TestCreateOperationWhenOperationTypeIsEmpty(t *testing.T) {
 	truncateTable(walletTest.db)
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "amount": 4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -152,7 +152,7 @@ func TestCreateOperationWhenAmountIsNegative(t *testing.T) {
 	truncateTable(walletTest.db)
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "operationType":"deposit", "amount": -4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -172,7 +172,7 @@ func TestCreateOperationWhenOperationTypeIsEmptyAndAmountIsNegative(t *testing.T
 	truncateTable(walletTest.db)
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "amount": -4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -192,7 +192,7 @@ func TestCreateOperationWhenInsufficientFunds(t *testing.T) {
 	truncateTable(walletTest.db)
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "operationType":"withdraw", "amount": 4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)
@@ -216,7 +216,7 @@ func TestGetWalletBalanceByUUIDWhenMissingConnectToDB(t *testing.T) {
 		return
 	}
 
-	req := httptest.NewRequest("GET", "/http/v1/wallets/?WALLET_UUID=ec82ea03-2b53-4258-ba87-a7efae979c43", nil)
+	req := httptest.NewRequest("GET", "/api/v1/wallets/?WALLET_UUID=ec82ea03-2b53-4258-ba87-a7efae979c43", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.GetWalletBalanceByUUID)
@@ -240,7 +240,7 @@ func TestCreateOperationWhenMissingConnectToDB(t *testing.T) {
 	}
 
 	bodyJSON := `{"walletId":"ec82ea03-2b53-4258-ba87-a7efae979c43", "operationType":"deposit", "amount": 4000}`
-	req := httptest.NewRequest("POST", "/http/v1/wallet", strings.NewReader(bodyJSON))
+	req := httptest.NewRequest("POST", "/api/v1/wallet", strings.NewReader(bodyJSON))
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(walletTest.handler.CreateOperation)

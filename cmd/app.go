@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/controller/http"
+	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
 )
 
@@ -42,7 +42,7 @@ func startApp(cfg *config.Config) {
 	}
 
 	r := chi.NewRouter()
-	http.AddRoutes(cfg, db, mgDb.Client, redisClient, fileClient, r)
+	api.AddRoutes(cfg, db, mgDb.Client, redisClient, fileClient, r)
 
 	startHTTPServer(cfg, r)
 }
@@ -50,7 +50,7 @@ func startApp(cfg *config.Config) {
 func startHTTPServer(cfg *config.Config, r *chi.Mux) {
 	var err error
 
-	log.Info("Start http server")
+	log.Info("Start api server")
 
 	serverAddress := fmt.Sprintf(":%s", cfg.Port)
 	serverErr := make(chan error)

@@ -9,15 +9,15 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
+        "termsOfService": "api://swagger.io/terms/",
         "contact": {
             "name": "Alexey Yudin",
-            "url": "http://www.swagger.io/support",
+            "url": "api://www.swagger.io/support",
             "email": "spdante@mail.ru"
         },
         "license": {
             "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "url": "api://www.apache.org/licenses/LICENSE-2.0.html"
         },
         "version": "{{.Version}}"
     },
@@ -449,7 +449,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:7540",
-	BasePath:         "/http",
+	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "Document Cache Server API",
 	Description:      "API для управления документами и кэширования",

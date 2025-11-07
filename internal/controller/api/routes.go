@@ -1,4 +1,4 @@
-package http
+package api
 
 import (
 	"gorm.io/gorm"
@@ -11,9 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	"github.com/AlexJudin/DocumentCacheServer/internal/controller/http/auth"
-	"github.com/AlexJudin/DocumentCacheServer/internal/controller/http/document"
-	"github.com/AlexJudin/DocumentCacheServer/internal/controller/http/register"
+	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/auth"
+	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/document"
+	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/register"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/middleware"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository"
 	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
@@ -59,14 +59,14 @@ func AddRoutes(config *config.Config,
 	r.Group(func(r chi.Router) {
 		r.Use(httprate.LimitByIP(5000, time.Second))
 		r.Use(authMiddleware.CheckToken)
-		r.Post("/http/docs", docsHandler.SaveDocument)
+		r.Post("/api/docs", docsHandler.SaveDocument)
 
-		r.Get("/http/docs", docsHandler.GetDocumentsList)
-		r.Head("/http/docs", docsHandler.GetDocumentsList)
+		r.Get("/api/docs", docsHandler.GetDocumentsList)
+		r.Head("/api/docs", docsHandler.GetDocumentsList)
 
-		r.Get("/http/docs/", docsHandler.GetDocumentById)
-		r.Head("/http/docs/", docsHandler.GetDocumentById)
+		r.Get("/api/docs/", docsHandler.GetDocumentById)
+		r.Head("/api/docs/", docsHandler.GetDocumentById)
 
-		r.Delete("/http/docs/", docsHandler.DeleteDocumentById)
+		r.Delete("/api/docs/", docsHandler.DeleteDocumentById)
 	})
 }
