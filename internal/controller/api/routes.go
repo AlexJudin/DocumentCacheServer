@@ -59,14 +59,14 @@ func AddRoutes(config *config.Config,
 	r.Group(func(r chi.Router) {
 		r.Use(httprate.LimitByIP(5000, time.Second))
 		r.Use(authMiddleware.CheckToken)
-		r.Post("/api/docs", docsHandler.SaveDocument)
+		r.Post("/api/docs", middleware.WithTimeout(time.Second, docsHandler.SaveDocument))
 
-		r.Get("/api/docs", docsHandler.GetDocumentsList)
-		r.Head("/api/docs", docsHandler.GetDocumentsList)
+		r.Get("/api/docs", middleware.WithTimeout(time.Second, docsHandler.GetDocumentsList))
+		r.Head("/api/docs", middleware.WithTimeout(time.Second, docsHandler.GetDocumentsList))
 
-		r.Get("/api/docs/", docsHandler.GetDocumentById)
-		r.Head("/api/docs/", docsHandler.GetDocumentById)
+		r.Get("/api/docs/", middleware.WithTimeout(time.Second, docsHandler.GetDocumentById))
+		r.Head("/api/docs/", middleware.WithTimeout(time.Second, docsHandler.GetDocumentById))
 
-		r.Delete("/api/docs/", docsHandler.DeleteDocumentById)
+		r.Delete("/api/docs/", middleware.WithTimeout(time.Second, docsHandler.DeleteDocumentById))
 	})
 }

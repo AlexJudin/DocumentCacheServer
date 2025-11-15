@@ -11,8 +11,8 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/common"
 )
 
-func TimeoutMiddleware(timeout time.Duration, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func WithTimeout(timeout time.Duration, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
 
@@ -34,9 +34,9 @@ func TimeoutMiddleware(timeout time.Duration, next http.Handler) http.Handler {
 		case <-ctx.Done():
 			// Таймаут истек
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				log.Errorf("Request timeout: %s %s", r.Method, r.URL.Path)
-				common.ApiError(http.StatusRequestTimeout, "Request timeout", w)
+				log.Errorf("request timeout: %s %s", r.Method, r.URL.Path)
+				common.ApiError(http.StatusRequestTimeout, "Завершено время ожидания выполнения запроса", w)
 			}
 		}
-	})
+	}
 }
