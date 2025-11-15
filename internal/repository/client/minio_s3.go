@@ -18,6 +18,8 @@ var buckets = []string{
 }
 
 func NewFileStorageClient(cfg *config.Config) (*minio.Client, error) {
+	log.Info("Start connection to S3")
+
 	client, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKeyID, cfg.SecretAccessKey, ""),
 		Secure: cfg.UseSSL,
@@ -25,6 +27,8 @@ func NewFileStorageClient(cfg *config.Config) (*minio.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file_storage client: %w", err)
 	}
+
+	log.Info("Successfully connected to S3")
 
 	err = ensureBucketExists(client)
 	if err != nil {
@@ -35,6 +39,8 @@ func NewFileStorageClient(cfg *config.Config) (*minio.Client, error) {
 }
 
 func ensureBucketExists(client *minio.Client) error {
+	log.Info("Check if bucket exists")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

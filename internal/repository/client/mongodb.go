@@ -16,6 +16,8 @@ type MongoDBClient struct {
 }
 
 func NewMongoDBClient(connectionString string) (*MongoDBClient, error) {
+	log.Info("Start connection to MongoDB")
+
 	clientOptions := options.Client().ApplyURI(connectionString)
 
 	clientOptions.SetConnectTimeout(10 * time.Second)
@@ -34,7 +36,7 @@ func NewMongoDBClient(connectionString string) (*MongoDBClient, error) {
 		return nil, fmt.Errorf("failed to ping MongoDB: %+v", err)
 	}
 
-	log.Info("Connected to MongoDB")
+	log.Info("Successfully connected to MongoDB")
 
 	return &MongoDBClient{
 		Client: client,

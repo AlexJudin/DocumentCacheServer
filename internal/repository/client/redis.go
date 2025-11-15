@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -10,6 +11,8 @@ import (
 )
 
 func ConnectToRedis(cfg *config.Config) (*redis.Client, error) {
+	log.Info("Start connection to Redis")
+
 	var connStr strings.Builder
 
 	connStr.WriteString(cfg.ConfigRedis.Host)
@@ -26,6 +29,8 @@ func ConnectToRedis(cfg *config.Config) (*redis.Client, error) {
 	if err := status.Err(); err != nil {
 		return nil, err
 	}
+
+	log.Info("Successfully connected to Redis")
 
 	return client, nil
 }
