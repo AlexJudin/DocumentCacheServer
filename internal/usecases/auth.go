@@ -3,7 +3,7 @@ package usecases
 import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 )
 

@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
-	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
+	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/file_storage"
 )
 
 var buckets = []string{

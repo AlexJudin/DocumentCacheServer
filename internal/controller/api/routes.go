@@ -15,9 +15,9 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/document"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/register"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/middleware"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )

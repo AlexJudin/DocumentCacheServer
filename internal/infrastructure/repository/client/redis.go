@@ -2,10 +2,10 @@ package client
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 )

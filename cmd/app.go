@@ -14,7 +14,7 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/client"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/client"
 )
 
 func startApp(cfg *config.Config) {

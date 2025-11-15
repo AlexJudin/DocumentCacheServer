@@ -5,9 +5,9 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/cache"
 )
 
 var _ Document = (*DocumentUsecase)(nil)

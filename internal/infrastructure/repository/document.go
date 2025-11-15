@@ -10,10 +10,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
+	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/file_storage"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/mongodb"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
-	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/repository/file_storage"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/mongodb"
-	"github.com/AlexJudin/DocumentCacheServer/internal/repository/postgres"
 )
 
 var _ Document = (*DocumentRepo)(nil)
