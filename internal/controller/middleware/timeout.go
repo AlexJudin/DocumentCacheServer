@@ -35,7 +35,7 @@ func WithTimeout(timeout time.Duration, next http.HandlerFunc) http.HandlerFunc 
 			// Таймаут истек
 			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 				log.Errorf("request timeout: %s %s", r.Method, r.URL.Path)
-				common.ApiError(http.StatusRequestTimeout, "Завершено время ожидания выполнения запроса", w)
+				common.ApiError(http.StatusRequestTimeout, "Превышено время ожидания выполнения запроса", w)
 			}
 		}
 	}

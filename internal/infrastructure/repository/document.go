@@ -64,19 +64,19 @@ func (r *DocumentRepo) Save(ctx context.Context, document *entity.Document) erro
 }
 
 func (r *DocumentRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
-	return r.GetList(req)
+	return r.MetaStorage.GetList(req)
 }
 
 func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string, error) {
 	metaDoc, err := r.MetaStorage.GetById(uuid)
 	if err != nil {
-		return nil, "", err
+		return nil, entity.DefaultMimeType, err
 	}
 
 	if metaDoc.File {
 		file, err := r.FileStorage.Download(ctx, metaDoc.UUID)
 		if err != nil {
-			return nil, "", err
+			return nil, entity.DefaultMimeType, err
 		}
 
 		return file, metaDoc.Mime, nil
@@ -84,7 +84,7 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string
 
 	jsonDocMap, err := r.JsonStorage.GetById(ctx, uuid)
 	if err != nil {
-		return nil, "", err
+		return nil, entity.DefaultMimeType, err
 	}
 
 	result := entity.ApiResponse{
@@ -93,7 +93,7 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string
 
 	jsonDoc, err := json.Marshal(result)
 	if err != nil {
-		return nil, "", err
+		return nil, entity.DefaultMimeType, err
 	}
 
 	return jsonDoc, metaDoc.Mime, nil

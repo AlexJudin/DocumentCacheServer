@@ -48,7 +48,7 @@ func AddRoutes(config *config.Config,
 	authUC := usecases.NewAuthUsecase(repoUser, authService)
 	authHandler := auth.NewAuthHandler(authUC)
 
-	// init middleware
+	// init auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	r.Post("/api/register", registerHandler.RegisterUser)

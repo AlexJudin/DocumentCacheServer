@@ -4,6 +4,8 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
+const DefaultMimeType = "application/json"
+
 type ApiError struct {
 	Code int    `json:"code"`
 	Text string `json:"text"`
