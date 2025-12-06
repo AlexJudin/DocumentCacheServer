@@ -154,12 +154,12 @@ func (s AuthService) LoginIsValid(login string) bool {
 		return false
 	}
 
-	matched, _ := regexp.MatchString("^[a-zA-Z0-9]+$", login)
-	if !matched {
+	matched, err := regexp.MatchString("^[a-zA-Z0-9]+$", login)
+	if err != nil {
 		return false
 	}
 
-	return true
+	return matched
 }
 
 func (s AuthService) PasswordIsValid(password string) bool {
@@ -184,11 +184,7 @@ func (s AuthService) PasswordIsValid(password string) bool {
 		}
 	}
 
-	if !isValid {
-		return false
-	}
-
-	return true
+	return isValid
 }
 
 func (s AuthService) generateAccessToken(login string) (string, error) {

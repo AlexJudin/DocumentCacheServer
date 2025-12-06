@@ -355,7 +355,7 @@ func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Requ
 }
 
 func getCurrentUser(r *http.Request) (string, error) {
-	login, ok := r.Context().Value("currentUser").(string)
+	login, ok := r.Context().Value(entity.CurrentUserKey).(string)
 	if !ok {
 		return "", fmt.Errorf("current user not found")
 	}

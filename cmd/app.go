@@ -68,7 +68,7 @@ func startHTTPServer(cfg *config.Config, r *chi.Mux) {
 		close(serverErr)
 	}()
 
-	stop := make(chan os.Signal)
+	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	select {

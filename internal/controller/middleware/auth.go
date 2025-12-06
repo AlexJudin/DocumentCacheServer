@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/common"
+	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 )
 
@@ -36,7 +37,7 @@ func (a *AuthMiddleware) CheckToken(next http.Handler) http.Handler {
 
 		log.Infof("Пользователь %s сделал запрос %s", userLogin, r.URL.Path)
 
-		ctx := context.WithValue(r.Context(), "currentUser", userLogin)
+		ctx := context.WithValue(r.Context(), entity.CurrentUserKey, userLogin)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 

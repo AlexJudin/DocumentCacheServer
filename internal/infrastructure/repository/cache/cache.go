@@ -37,11 +37,11 @@ func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interfac
 
 	metadata := make(map[string]interface{})
 
-	switch data.(type) {
+	switch value := data.(type) {
 	case []byte:
-		file = data.([]byte)
+		file = value
 	case map[string]interface{}:
-		jsonDocMap = data.(map[string]interface{})
+		jsonDocMap = value
 	}
 
 	if isFile {

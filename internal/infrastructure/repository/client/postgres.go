@@ -20,11 +20,16 @@ func ConnectDB(connStr string) (*gorm.DB, error) {
 	log.Info("Successfully connected to database")
 
 	log.Info("Running migration")
-	db.AutoMigrate(
+	err = db.AutoMigrate(
 		&model.MetaDocument{},
 		&model.User{},
 		&model.Token{},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("Successfully migrated")
 
 	return db, nil
 }
