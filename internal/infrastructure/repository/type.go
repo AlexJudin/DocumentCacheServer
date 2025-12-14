@@ -8,8 +8,8 @@ import (
 )
 
 type Document interface {
-	Save(ctx context.Context, document *entity.Document) error
+	SaveSagaWorkflow(ctx context.Context, document *entity.Document) error
 	GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error)
 	GetById(ctx context.Context, uuid string) ([]byte, string, error)
-	DeleteById(ctx context.Context, uuid string) error
+	DeleteByIdSagaWorkflow(ctx context.Context, uuid string) error
 }

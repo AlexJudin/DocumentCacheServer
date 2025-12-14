@@ -33,8 +33,8 @@ func NewDocumentRepo(db *gorm.DB, mongoClient *mongo.Client, minioClient *minio.
 	}
 }
 
-// Save - для сохранения документа используется паттерн SAGA
-func (r *DocumentRepo) Save(ctx context.Context, document *entity.Document) error {
+// SaveSagaWorkflow - для сохранения документа используется паттерн SAGA
+func (r *DocumentRepo) SaveSagaWorkflow(ctx context.Context, document *entity.Document) error {
 	uuidDoc := document.Meta.UUID
 
 	err := r.MetaStorage.Save(document.Meta)
@@ -99,8 +99,8 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string
 	return jsonDoc, metaDoc.Mime, nil
 }
 
-// DeleteById - для удаления документа используется паттерн SAGA
-func (r *DocumentRepo) DeleteById(ctx context.Context, uuid string) error {
+// DeleteByIdSagaWorkflow - для удаления документа используется паттерн SAGA
+func (r *DocumentRepo) DeleteByIdSagaWorkflow(ctx context.Context, uuid string) error {
 	metaDoc, err := r.MetaStorage.GetById(uuid)
 	if err != nil {
 		return err

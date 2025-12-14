@@ -11,9 +11,19 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/common"
 )
 
-func WithTimeout(timeout time.Duration, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(r.Context(), timeout)
+type TimeoutMiddleware struct {
+	timeout time.Duration
+}
+
+func NewTimeoutMiddleware(timeout time.Duration) *TimeoutMiddleware {
+	return &TimeoutMiddleware{
+		timeout: timeout,
+	}
+}
+
+func (t *TimeoutMiddleware) WithTimeout(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), t.timeout)
 		defer cancel()
 
 		// Создаем новый запрос с контекстом с таймаутом
@@ -38,5 +48,5 @@ func WithTimeout(timeout time.Duration, next http.HandlerFunc) http.HandlerFunc 
 				common.ApiError(http.StatusRequestTimeout, "Превышено время ожидания выполнения запроса", w)
 			}
 		}
-	}
+	})
 }

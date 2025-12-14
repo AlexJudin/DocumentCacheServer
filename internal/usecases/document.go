@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
@@ -39,7 +40,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
 	}
 
-	err := t.DocumentRepository.Save(t.Ctx, document)
+	err := t.DocumentRepository.SaveSagaWorkflow(t.Ctx, document)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 }
 
 func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
-	err := t.DocumentRepository.DeleteById(t.Ctx, uuid)
+	err := t.DocumentRepository.DeleteByIdSagaWorkflow(t.Ctx, uuid)
 	if err != nil {
 		return err
 	}

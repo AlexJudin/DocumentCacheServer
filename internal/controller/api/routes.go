@@ -51,6 +51,9 @@ func AddRoutes(config *config.Config,
 	// init auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
+	//init timeout middleware
+	timeoutMiddleware := middleware.NewTimeoutMiddleware(time.Second)
+
 	r.Post("/api/register", registerHandler.RegisterUser)
 	r.Post("/api/auth", authHandler.AuthorizationUser)
 	r.Post("/api/refresh-token", authHandler.RefreshToken)
@@ -58,15 +61,18 @@ func AddRoutes(config *config.Config,
 
 	r.Group(func(r chi.Router) {
 		r.Use(httprate.LimitByIP(5000, time.Second))
-		r.Use(authMiddleware.CheckToken)
-		r.Post("/api/docs", middleware.WithTimeout(time.Second, docsHandler.SaveDocument))
+		r.Use(
+			authMiddleware.CheckToken,
+			timeoutMiddleware.WithTimeout,
+		)
+		r.Post("/api/docs", docsHandler.SaveDocument)
 
-		r.Get("/api/docs", middleware.WithTimeout(time.Second, docsHandler.GetDocumentsList))
-		r.Head("/api/docs", middleware.WithTimeout(time.Second, docsHandler.GetDocumentsList))
+		r.Get("/api/docs", docsHandler.GetDocumentsList)
+		r.Head("/api/docs", docsHandler.GetDocumentsList)
 
-		r.Get("/api/docs/", middleware.WithTimeout(time.Second, docsHandler.GetDocumentById))
-		r.Head("/api/docs/", middleware.WithTimeout(time.Second, docsHandler.GetDocumentById))
+		r.Get("/api/docs/", docsHandler.GetDocumentById)
+		r.Head("/api/docs/", docsHandler.GetDocumentById)
 
-		r.Delete("/api/docs/", middleware.WithTimeout(time.Second, docsHandler.DeleteDocumentById))
+		r.Delete("/api/docs/", docsHandler.DeleteDocumentById)
 	})
 }

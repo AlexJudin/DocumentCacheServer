@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,6 +44,10 @@ func startApp(cfg *config.Config) {
 
 	r := chi.NewRouter()
 	api.AddRoutes(cfg, db, mgDb.Client, redisClient, fileClient, r)
+
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+	}()
 
 	startHTTPServer(cfg, r)
 }
