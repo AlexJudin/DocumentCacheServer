@@ -43,6 +43,7 @@ func (r *DocumentMetaRepo) GetList(req entity.DocumentListRequest) ([]model.Meta
 		Where(fmt.Sprintf("%s = ?", req.Key), req.Value).
 		Where("? = ANY(meta_documents.grant)", req.Login).
 		Limit(req.Limit).
+		Offset(req.Offset).
 		Find(&documents).
 		Order("name asc").
 		Order("created_at desc").Error

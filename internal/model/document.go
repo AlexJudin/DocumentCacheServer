@@ -13,11 +13,11 @@ const (
 
 type MetaDocument struct {
 	ID        uint           `gorm:"primarykey" json:"-"`
-	UUID      string         `json:"-"`
+	UUID      string         `gorm:"index" json:"-"`
 	CreatedAt time.Time      `json:"-"`
 	Name      string         `json:"name"`
 	File      bool           `json:"file"`
 	Public    bool           `json:"public"`
 	Mime      string         `json:"mime"`
-	Grant     pq.StringArray `gorm:"type:text[]" json:"grant"`
+	Grant     pq.StringArray `gorm:"type:text[], index" json:"grant"`
 }

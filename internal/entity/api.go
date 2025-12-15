@@ -18,10 +18,11 @@ type ApiResponse struct {
 }
 
 type DocumentListRequest struct {
-	Login string `json:"login"`
-	Key   string `json:"key"`
-	Value string `json:"value"`
-	Limit int    `json:"limit"`
+	Login  string `json:"login"`
+	Key    string `json:"key"`
+	Value  string `json:"value"`
+	Limit  int    `json:"limit"`
+	Offset int    `json:"offset"`
 }
 
 func (d *DocumentListRequest) LoginIsEmpty() bool {

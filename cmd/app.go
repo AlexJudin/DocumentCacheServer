@@ -15,7 +15,10 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/client"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 )
 
 func startApp(cfg *config.Config) {
@@ -32,7 +35,7 @@ func startApp(cfg *config.Config) {
 	}
 	defer mgDb.Close()
 
-	redisClient, err := client.ConnectToRedis(cfg)
+	cacheManager, err := client.ConnectToRedis(cfg)
 	if err != nil {
 		log.Error("error connecting to redis")
 	}
@@ -42,14 +45,29 @@ func startApp(cfg *config.Config) {
 		log.Fatal(err)
 	}
 
-	r := chi.NewRouter()
-	api.AddRoutes(cfg, db, mgDb.Client, redisClient, fileClient, r)
+	startPprofServer()
 
-	go func() {
-		http.ListenAndServe("localhost:6060", nil)
-	}()
+	// init repository
+	documentRepo := repository.NewDocumentRepo(db, mgDb.Client, fileClient)
+	userRepo := postgres.NewUserRepo(db)
+	tokenRepo := postgres.NewTokenStorageRepo(db)
+
+	// init cacheClient
+	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
+
+	r := chi.NewRouter()
+	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, r)
 
 	startHTTPServer(cfg, r)
+}
+
+func startPprofServer() {
+	go func() {
+		err := http.ListenAndServe("localhost:6060", nil)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 }
 
 func startHTTPServer(cfg *config.Config, r *chi.Mux) {

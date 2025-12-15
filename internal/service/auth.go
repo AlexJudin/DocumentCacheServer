@@ -4,7 +4,6 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"gorm.io/gorm"
 	"regexp"
 	"time"
 	"unicode"
@@ -26,13 +25,13 @@ const (
 
 type AuthService struct {
 	Config       *config.Config
-	TokenStorage postgres.TokenStorage
+	TokenStorage *postgres.TokenStorageRepo
 }
 
-func NewAuthService(cfg *config.Config, db *gorm.DB) AuthService {
+func NewAuthService(cfg *config.Config, repo *postgres.TokenStorageRepo) AuthService {
 	return AuthService{
 		Config:       cfg,
-		TokenStorage: postgres.NewTokenStorageRepo(db),
+		TokenStorage: repo,
 	}
 }
 

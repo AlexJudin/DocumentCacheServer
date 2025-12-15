@@ -1,14 +1,10 @@
 package api
 
 import (
-	"gorm.io/gorm"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
-	"github.com/minio/minio-go/v7"
-	"github.com/redis/go-redis/v9"
-	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/auth"
@@ -22,30 +18,23 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
 
-func AddRoutes(config *config.Config,
-	db *gorm.DB,
-	mgDbClient *mongo.Client,
-	redisClient *redis.Client,
-	fileStorageClient *minio.Client,
+func AddRoutes(cfg *config.Config,
+	documentRepo *repository.DocumentRepo,
+	userRepo *postgres.UserRepo,
+	tokenRepo *postgres.TokenStorageRepo,
+	cacheRepo *cache.DocumentRepo,
 	r *chi.Mux) {
 	// init services
-	authService := service.NewAuthService(config, db)
-
-	// init postgres repository
-	repoDocument := repository.NewDocumentRepo(db, mgDbClient, fileStorageClient)
-	repoUser := postgres.NewUserRepo(db)
-
-	// init cacheClient
-	cacheClient := cache.NewDocumentRepo(config, redisClient)
+	authService := service.NewAuthService(cfg, tokenRepo)
 
 	// init usecases
-	docsUC := usecases.NewDocumentUsecase(repoDocument, cacheClient)
+	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo)
 	docsHandler := document.NewDocumentHandler(docsUC)
 
-	registerUC := usecases.NewRegisterUsecase(repoUser, authService)
+	registerUC := usecases.NewRegisterUsecase(userRepo, authService)
 	registerHandler := register.NewRegisterHandler(registerUC)
 
-	authUC := usecases.NewAuthUsecase(repoUser, authService)
+	authUC := usecases.NewAuthUsecase(userRepo, authService)
 	authHandler := auth.NewAuthHandler(authUC)
 
 	// init auth middleware
