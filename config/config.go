@@ -21,6 +21,7 @@ type Config struct {
 	Port     string
 	LogLevel log.Level
 	*ConfigDB
+	*ConfigTemporal
 	*ConfigMongoDB
 	*ConfigAuth
 	*ConfigRedis
@@ -35,6 +36,11 @@ type ConfigDB struct {
 	Password string
 	DBName   string
 	Sslmode  string
+}
+
+type ConfigTemporal struct {
+	Host string
+	Port string
 }
 
 type ConfigMongoDB struct {
@@ -94,6 +100,12 @@ func New() (*Config, error) {
 		DBName:   os.Getenv("DB_NAME"),
 	}
 	cfg.ConfigDB = &dbCfg
+
+	temporalCfg := ConfigTemporal{
+		Host: os.Getenv("TEMPORAL_HOST"),
+		Port: os.Getenv("TEMPORAL_PORT"),
+	}
+	cfg.ConfigTemporal = &temporalCfg
 
 	mgDbCfg := ConfigMongoDB{
 		Host: os.Getenv("MGDB_HOST"),
@@ -155,10 +167,12 @@ func (c *Config) GetDataSourceName() string {
 	return str
 }
 
-func (c *Config) GetMongoDBSourse() string {
-	str := fmt.Sprintf("mongodb://%s:%s", c.ConfigMongoDB.Host, c.ConfigMongoDB.Port)
+func (c *Config) GetTemporalSource() string {
+	return fmt.Sprintf("%s:%s", c.ConfigTemporal.Host, c.ConfigTemporal.Port)
+}
 
-	return str
+func (c *Config) GetMongoDBSourse() string {
+	return fmt.Sprintf("mongodb://%s:%s", c.ConfigMongoDB.Host, c.ConfigMongoDB.Port)
 }
 
 func getMinioEndpoint() string {

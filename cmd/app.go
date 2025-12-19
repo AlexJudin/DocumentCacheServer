@@ -19,6 +19,7 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/client"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/temporal"
 )
 
 func startApp(cfg *config.Config) {
@@ -27,6 +28,13 @@ func startApp(cfg *config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	tempConStr := cfg.GetTemporalSource()
+	temporalClient, err := temporal.NewTemporalClient(tempConStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer temporalClient.Close()
 
 	connMgDbStr := cfg.GetMongoDBSourse()
 	mgDb, err := client.NewMongoDBClient(connMgDbStr)
@@ -39,6 +47,7 @@ func startApp(cfg *config.Config) {
 	if err != nil {
 		log.Error("error connecting to redis")
 	}
+	defer cacheManager.Close()
 
 	fileClient, err := client.NewFileStorageClient(cfg)
 	if err != nil {
