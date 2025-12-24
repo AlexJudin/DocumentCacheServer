@@ -24,7 +24,13 @@ import (
 
 func startApp(cfg *config.Config) {
 	connStr := cfg.GetDataSourceName()
-	db, err := client.ConnectDB(connStr)
+	db, err := client.NewDatabase(connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	err = db.AutoMigrate()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,9 +63,9 @@ func startApp(cfg *config.Config) {
 	startPprofServer()
 
 	// init repository
-	documentRepo := repository.NewDocumentRepo(db, mgDb.Client, fileClient)
-	userRepo := postgres.NewUserRepo(db)
-	tokenRepo := postgres.NewTokenStorageRepo(db)
+	documentRepo := repository.NewDocumentRepo(db.DB, mgDb.Client, fileClient)
+	userRepo := postgres.NewUserRepo(db.DB)
+	tokenRepo := postgres.NewTokenStorageRepo(db.DB)
 
 	// init cacheClient
 	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
