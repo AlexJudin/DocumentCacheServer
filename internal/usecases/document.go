@@ -32,17 +32,17 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 
 	document.Meta.UUID = uuidDoc
 
-	if document.Meta.File {
-		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
-	}
-
-	if len(document.Json) != 0 {
-		t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
-	}
-
 	err := t.DocumentRepository.SaveSagaWorkflow(t.Ctx, document)
 	if err != nil {
 		return err
+	}
+
+	if document.Meta.File {
+		go t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
+	}
+
+	if len(document.Json) != 0 {
+		go t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
 		return err
 	}
 
-	t.Cache.Delete(t.Ctx, uuid)
+	go t.Cache.Delete(t.Ctx, uuid)
 
 	return nil
 }

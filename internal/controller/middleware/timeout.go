@@ -30,11 +30,11 @@ func (t *TimeoutMiddleware) WithTimeout(next http.Handler) http.Handler {
 		r = r.WithContext(ctx)
 
 		// Создаем канал для отслеживания завершения обработки
-		done := make(chan bool, 1)
+		done := make(chan struct{})
 
 		go func() {
 			next.ServeHTTP(w, r)
-			done <- true
+			close(done)
 		}()
 
 		select {
