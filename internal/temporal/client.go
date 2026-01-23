@@ -7,6 +7,8 @@ import (
 	"go.temporal.io/sdk/client"
 )
 
+const SaveDocument = "save-document"
+
 func NewTemporalClient(connStr string) (client.Client, error) {
 	log.Info("Start connection to temporal")
 

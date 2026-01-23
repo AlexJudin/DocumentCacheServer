@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
+	tempClient "go.temporal.io/sdk/client"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/auth"
@@ -23,12 +24,13 @@ func AddRoutes(cfg *config.Config,
 	userRepo *postgres.UserRepo,
 	tokenRepo *postgres.TokenStorageRepo,
 	cacheRepo *cache.DocumentRepo,
+	temporalClient tempClient.Client,
 	r *chi.Mux) {
 	// init services
 	authService := service.NewAuthService(cfg, tokenRepo)
 
 	// init usecases
-	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo)
+	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo, temporalClient)
 	docsHandler := document.NewDocumentHandler(docsUC)
 
 	registerUC := usecases.NewRegisterUsecase(userRepo, authService)

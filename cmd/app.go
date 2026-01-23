@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"go.temporal.io/sdk/worker"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
+	tempClient "go.temporal.io/sdk/client"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
@@ -70,8 +72,10 @@ func startApp(cfg *config.Config) {
 	// init cacheClient
 	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
 
+	runWorkflow(temporalClient, documentRepo)
+
 	r := chi.NewRouter()
-	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, r)
+	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, temporalClient, r)
 
 	startHTTPServer(cfg, r)
 }
@@ -122,5 +126,23 @@ func startHTTPServer(cfg *config.Config, r *chi.Mux) {
 		log.Info("The server has been stopped successfully")
 	case err = <-serverErr:
 		log.Errorf("Server error: %+v", err)
+	}
+}
+
+func runWorkflow(client tempClient.Client, documentRepo *repository.DocumentRepo) {
+	w := worker.New(client, temporal.SaveDocument, worker.Options{})
+
+	w.RegisterWorkflow(documentRepo.SaveSagaWorkflow)
+	w.RegisterWorkflow(documentRepo.DeleteSagaWorkflow)
+	w.RegisterActivity(documentRepo.MetaStorage.Save)
+	w.RegisterActivity(documentRepo.MetaStorage.DeleteById)
+	w.RegisterActivity(documentRepo.FileStorage.Upload)
+	w.RegisterActivity(documentRepo.FileStorage.Delete)
+	w.RegisterActivity(documentRepo.JsonStorage.Save)
+	w.RegisterActivity(documentRepo.JsonStorage.DeleteById)
+
+	err := w.Run(worker.InterruptCh())
+	if err != nil {
+		log.Fatal(err)
 	}
 }

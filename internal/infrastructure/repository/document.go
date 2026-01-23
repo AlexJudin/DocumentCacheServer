@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"gorm.io/gorm"
+	"time"
 
 	"github.com/minio/minio-go/v7"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.temporal.io/sdk/temporal"
+	"go.temporal.io/sdk/workflow"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/file_storage"
@@ -34,29 +36,46 @@ func NewDocumentRepo(db *gorm.DB, mongoClient *mongo.Client, minioClient *minio.
 }
 
 // SaveSagaWorkflow - для сохранения документа используется паттерн SAGA
-func (r *DocumentRepo) SaveSagaWorkflow(ctx context.Context, document *entity.Document) error {
+func (r *DocumentRepo) SaveSagaWorkflow(ctxFlow workflow.Context, document *entity.Document) error {
+	ctxFlow = workflow.WithActivityOptions(ctxFlow, workflow.ActivityOptions{
+		StartToCloseTimeout: 15 * time.Minute,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:        10 * time.Minute,
+			BackoffCoefficient:     1,
+			MaximumInterval:        time.Hour,
+			MaximumAttempts:        1,
+			NonRetryableErrorTypes: nil,
+		},
+	})
+	logger := workflow.GetLogger(ctxFlow)
+
 	uuidDoc := document.Meta.UUID
 
-	err := r.MetaStorage.Save(document.Meta)
+	err := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.Save, document.Meta).Get(ctxFlow, nil)
 	if err != nil {
+		logger.Error("")
 		return err
 	}
 
 	if document.Meta.File {
-		if err = r.FileStorage.Upload(ctx, uuidDoc, document.File.Content); err != nil {
-			if compErr := r.MetaStorage.DeleteById(uuidDoc); compErr != nil {
-				log.Errorf("compensation failed: %+v", compErr)
+		if err = workflow.ExecuteActivity(ctxFlow, r.FileStorage.Upload, uuidDoc, document.File.Content).Get(ctxFlow, nil); err != nil {
+			if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.DeleteById, uuidDoc).Get(ctxFlow, nil); compErr != nil {
+				logger.Error("compensation failed: ", compErr)
 			}
+			logger.Error("")
+
 			return err
 		}
 
 		return nil
 	}
 
-	if err = r.JsonStorage.Save(ctx, uuidDoc, document.Json); err != nil {
-		if compErr := r.MetaStorage.DeleteById(uuidDoc); compErr != nil {
-			log.Errorf("compensation failed: %+v", compErr)
+	if err = workflow.ExecuteActivity(ctxFlow, r.JsonStorage.Save, uuidDoc, document.Json).Get(ctxFlow, nil); err != nil {
+		if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.DeleteById, uuidDoc).Get(ctxFlow, nil); compErr != nil {
+			logger.Error("compensation failed: ", compErr)
 		}
+		logger.Error("")
+
 		return err
 	}
 
@@ -99,33 +118,50 @@ func (r *DocumentRepo) GetById(ctx context.Context, uuid string) ([]byte, string
 	return jsonDoc, metaDoc.Mime, nil
 }
 
-// DeleteByIdSagaWorkflow - для удаления документа используется паттерн SAGA
-func (r *DocumentRepo) DeleteByIdSagaWorkflow(ctx context.Context, uuid string) error {
+// DeleteSagaWorkflow - для удаления документа используется паттерн SAGA
+func (r *DocumentRepo) DeleteSagaWorkflow(ctxFlow workflow.Context, uuid string) error {
+	ctxFlow = workflow.WithActivityOptions(ctxFlow, workflow.ActivityOptions{
+		StartToCloseTimeout: 15 * time.Minute,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:        10 * time.Minute,
+			BackoffCoefficient:     1,
+			MaximumInterval:        time.Hour,
+			MaximumAttempts:        1,
+			NonRetryableErrorTypes: nil,
+		},
+	})
+	logger := workflow.GetLogger(ctxFlow)
+
 	metaDoc, err := r.MetaStorage.GetById(uuid)
 	if err != nil {
 		return err
 	}
 
-	err = r.MetaStorage.DeleteById(uuid)
+	err = workflow.ExecuteActivity(ctxFlow, r.MetaStorage.DeleteById, uuid).Get(ctxFlow, nil)
 	if err != nil {
+		logger.Error("")
 		return err
 	}
 
 	if metaDoc.File {
-		if err = r.FileStorage.Delete(ctx, uuid); err != nil {
-			if compErr := r.MetaStorage.Save(&metaDoc); compErr != nil {
-				log.Errorf("compensation failed: %+v", compErr)
+		if err = workflow.ExecuteActivity(ctxFlow, r.FileStorage.Delete, uuid).Get(ctxFlow, nil); err != nil {
+			if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.Save, &metaDoc).Get(ctxFlow, nil); compErr != nil {
+				logger.Error("compensation failed: ", compErr)
 			}
+			logger.Error("")
+
 			return err
 		}
 
 		return nil
 	}
 
-	if err = r.JsonStorage.DeleteById(ctx, uuid); err != nil {
-		if compErr := r.MetaStorage.Save(&metaDoc); compErr != nil {
-			log.Errorf("compensation failed: %+v", compErr)
+	if err = workflow.ExecuteActivity(ctxFlow, r.JsonStorage.DeleteById, uuid).Get(ctxFlow, nil); err != nil {
+		if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.Save, &metaDoc).Get(ctxFlow, nil); compErr != nil {
+			logger.Error("compensation failed: ", compErr)
 		}
+		logger.Error("")
+
 		return err
 	}
 
