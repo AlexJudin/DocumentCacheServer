@@ -53,31 +53,47 @@ func (r *DocumentRepo) SaveSagaWorkflow(ctxFlow workflow.Context, document *enti
 
 	err := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.Save, document.Meta).Get(ctxFlow, nil)
 	if err != nil {
-		logger.Error("")
+		logger.Error("failed to save document metadata",
+			"uuid", uuidDoc,
+			"error", err)
 		return err
 	}
 
 	if document.Meta.File {
 		if err = workflow.ExecuteActivity(ctxFlow, r.FileStorage.Upload, uuidDoc, document.File.Content).Get(ctxFlow, nil); err != nil {
+			logger.Error("failed to upload file content",
+				"uuid", uuidDoc,
+				"error", err)
+
 			if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.DeleteById, uuidDoc).Get(ctxFlow, nil); compErr != nil {
-				logger.Error("compensation failed: ", compErr)
+				logger.Error("compensation failed: failed to delete metadata after upload failure",
+					"uuid", uuidDoc,
+					"compensationError", compErr,
+					"originalError", err)
 			}
-			logger.Error("")
 
 			return err
 		}
+		logger.Info("document saved successfully", "uuid", uuidDoc)
 
 		return nil
 	}
 
 	if err = workflow.ExecuteActivity(ctxFlow, r.JsonStorage.Save, uuidDoc, document.Json).Get(ctxFlow, nil); err != nil {
+		logger.Error("failed to save JSON content",
+			"uuid", uuidDoc,
+			"error", err)
+
 		if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.DeleteById, uuidDoc).Get(ctxFlow, nil); compErr != nil {
-			logger.Error("compensation failed: ", compErr)
+			logger.Error("compensation failed: failed to delete metadata after JSON save failure",
+				"uuid", uuidDoc,
+				"compensationError", compErr,
+				"originalError", err)
 		}
-		logger.Error("")
 
 		return err
 	}
+	logger.Info("document saved successfully", "uuid", uuidDoc)
 
 	return nil
 }
@@ -132,38 +148,48 @@ func (r *DocumentRepo) DeleteSagaWorkflow(ctxFlow workflow.Context, uuid string)
 	})
 	logger := workflow.GetLogger(ctxFlow)
 
-	metaDoc, err := r.MetaStorage.GetById(uuid)
+	var metaDoc *model.MetaDocument
+	err := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.GetById, uuid).Get(ctxFlow, &metaDoc)
 	if err != nil {
+		logger.Error("failed to get document metadata", "uuid", uuid, "error", err)
 		return err
 	}
 
 	err = workflow.ExecuteActivity(ctxFlow, r.MetaStorage.DeleteById, uuid).Get(ctxFlow, nil)
 	if err != nil {
-		logger.Error("")
+		logger.Error("failed to delete document metadata", "uuid", uuid, "error", err)
 		return err
 	}
 
 	if metaDoc.File {
 		if err = workflow.ExecuteActivity(ctxFlow, r.FileStorage.Delete, uuid).Get(ctxFlow, nil); err != nil {
+			logger.Error("failed to delete file from storage", "uuid", uuid, "error", err)
+
 			if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.Save, &metaDoc).Get(ctxFlow, nil); compErr != nil {
-				logger.Error("compensation failed: ", compErr)
+				logger.Error("compensation failed: unable to restore metadata",
+					"uuid", uuid,
+					"error", compErr)
 			}
-			logger.Error("")
 
 			return err
 		}
+		logger.Info("document delete successfully", "uuid", uuid)
 
 		return nil
 	}
 
 	if err = workflow.ExecuteActivity(ctxFlow, r.JsonStorage.DeleteById, uuid).Get(ctxFlow, nil); err != nil {
+		logger.Error("failed to delete JSON data", "uuid", uuid, "error", err)
+
 		if compErr := workflow.ExecuteActivity(ctxFlow, r.MetaStorage.Save, &metaDoc).Get(ctxFlow, nil); compErr != nil {
-			logger.Error("compensation failed: ", compErr)
+			logger.Error("compensation failed: unable to restore metadata",
+				"uuid", uuid,
+				"error", compErr)
 		}
-		logger.Error("")
 
 		return err
 	}
+	logger.Info("document delete successfully", "uuid", uuid)
 
 	return nil
 }

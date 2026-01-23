@@ -136,6 +136,7 @@ func runWorkflow(client tempClient.Client, documentRepo *repository.DocumentRepo
 	w.RegisterWorkflow(documentRepo.DeleteSagaWorkflow)
 	w.RegisterActivity(documentRepo.MetaStorage.Save)
 	w.RegisterActivity(documentRepo.MetaStorage.DeleteById)
+	w.RegisterActivity(documentRepo.MetaStorage.GetById)
 	w.RegisterActivity(documentRepo.FileStorage.Upload)
 	w.RegisterActivity(documentRepo.FileStorage.Delete)
 	w.RegisterActivity(documentRepo.JsonStorage.Save)
