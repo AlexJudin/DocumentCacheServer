@@ -44,11 +44,11 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 
 	if document.Meta.File {
 		go t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.File.Content, true)
+
+		return nil
 	}
 
-	if len(document.Json) != 0 {
-		go t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
-	}
+	go t.Cache.Set(t.Ctx, uuidDoc, document.Meta.Mime, document.Json, false)
 
 	return nil
 }
