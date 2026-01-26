@@ -12,29 +12,31 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
-type DocumentMetaRepo struct {
+var _ MetadataRepository = (*MetadataRepo)(nil)
+
+type MetadataRepo struct {
 	Db *gorm.DB
 }
 
-func NewDocumentMetaRepo(db *gorm.DB) *DocumentMetaRepo {
-	return &DocumentMetaRepo{Db: db}
+func NewMetadataRepository(db *gorm.DB) *MetadataRepo {
+	return &MetadataRepo{Db: db}
 }
 
-func (r *DocumentMetaRepo) Save(document *model.MetaDocument) error {
-	log.Infof("saving document [%s] metadata to database", document.UUID)
+func (r *MetadataRepo) Save(document *model.MetaDocument) error {
+	log.Infof("saving saga [%s] metadata to database", document.UUID)
 
 	err := r.Db.Create(&document).Error
 	if err != nil {
-		log.Debugf("failed to save document metadata: %+v", err)
-		return fmt.Errorf("failed to save document [%s] metadata", document.UUID)
+		log.Debugf("failed to save saga metadata: %+v", err)
+		return fmt.Errorf("failed to save saga [%s] metadata", document.UUID)
 	}
 
-	log.Infof("document [%s] metadata saved successfully", document.UUID)
+	log.Infof("saga [%s] metadata saved successfully", document.UUID)
 
 	return nil
 }
 
-func (r *DocumentMetaRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
+func (r *MetadataRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error) {
 	log.Info("retrieving documents list from database")
 
 	documents := make([]model.MetaDocument, req.Limit)
@@ -57,8 +59,8 @@ func (r *DocumentMetaRepo) GetList(req entity.DocumentListRequest) ([]model.Meta
 	return documents, nil
 }
 
-func (r *DocumentMetaRepo) GetById(uuid string) (model.MetaDocument, error) {
-	log.Infof("retrieving document [%s] metadata", uuid)
+func (r *MetadataRepo) GetById(uuid string) (model.MetaDocument, error) {
+	log.Infof("retrieving saga [%s] metadata", uuid)
 
 	var document model.MetaDocument
 
@@ -67,36 +69,36 @@ func (r *DocumentMetaRepo) GetById(uuid string) (model.MetaDocument, error) {
 		First(&document).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Infof("document [%s] metadata not found", uuid)
+			log.Infof("saga [%s] metadata not found", uuid)
 			return document, custom_error.ErrDocumentNotFound
 		}
 
-		log.Debugf("failed to retrieve document: %+v", err)
-		return document, fmt.Errorf("failed to retrieve document [%s] metadata", uuid)
+		log.Debugf("failed to retrieve saga: %+v", err)
+		return document, fmt.Errorf("failed to retrieve saga [%s] metadata", uuid)
 	}
 
-	log.Infof("document [%s] metadata retrieved successfully", uuid)
+	log.Infof("saga [%s] metadata retrieved successfully", uuid)
 
 	return document, nil
 }
 
-func (r *DocumentMetaRepo) DeleteById(id string) error {
-	log.Infof("deleting document [%s] metadata", id)
+func (r *MetadataRepo) DeleteById(id string) error {
+	log.Infof("deleting saga [%s] metadata", id)
 
 	err := r.Db.Model(&model.MetaDocument{}).
 		Where("uuid = ?", id).
 		Delete(&model.MetaDocument{}).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Infof("document [%s] metadata not found", id)
+			log.Infof("saga [%s] metadata not found", id)
 			return custom_error.ErrDocumentNotFound
 		}
 
-		log.Debugf("failed to delete document metadata: %+v", err)
-		return fmt.Errorf("failed to delete document [%s] metadata", id)
+		log.Debugf("failed to delete saga metadata: %+v", err)
+		return fmt.Errorf("failed to delete saga [%s] metadata", id)
 	}
 
-	log.Infof("document [%s] metadata deleted successfully", id)
+	log.Infof("saga [%s] metadata deleted successfully", id)
 
 	return nil
 }

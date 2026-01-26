@@ -45,7 +45,7 @@ func NewDocumentHandler(uc usecases.Document) DocumentHandler {
 func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		log.Errorf("save document error: %+v", err)
+		log.Errorf("save saga error: %+v", err)
 		messageError = "Переданы некорректные параметры запроса на загрузку нового документа."
 
 		common.ApiError(http.StatusBadRequest, messageError, w)
@@ -57,7 +57,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	var document entity.Document
 
 	if err = json.Unmarshal([]byte(metaDoc), &document.Meta); err != nil {
-		log.Errorf("save document error: %+v", err)
+		log.Errorf("save saga error: %+v", err)
 		messageError = "Не удалось прочитать параметры документа."
 
 		common.ApiError(http.StatusBadRequest, messageError, w)
@@ -70,7 +70,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	if jsonDoc != "" {
 		err = json.Unmarshal([]byte(jsonDoc), &jsonDocMap)
 		if err != nil {
-			log.Errorf("save document error: %+v", err)
+			log.Errorf("save saga error: %+v", err)
 			messageError = "Не удалось загрузить json документа."
 
 			common.ApiError(http.StatusBadRequest, messageError, w)
@@ -83,7 +83,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	if document.Meta.File {
 		file, header, err := r.FormFile("file")
 		if err != nil {
-			log.Errorf("save document error: %+v", err)
+			log.Errorf("save saga error: %+v", err)
 			messageError = "Не удалось загрузить файл документа."
 
 			common.ApiError(http.StatusBadRequest, messageError, w)
@@ -93,7 +93,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 
 		data, err := io.ReadAll(file)
 		if err != nil {
-			log.Errorf("save document error: %+v", err)
+			log.Errorf("save saga error: %+v", err)
 			messageError = "Не удалось прочитать файл документа."
 
 			common.ApiError(http.StatusBadRequest, messageError, w)
@@ -108,7 +108,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 
 	err = h.uc.SaveDocument(&document)
 	if err != nil {
-		log.Errorf("save document: error save document [%s]: service is not allowed", document.Meta.Name)
+		log.Errorf("save saga: error save saga [%s]: service is not allowed", document.Meta.Name)
 		messageError = "Ошибка сервера, не удалось сохранить документ. Попробуйте позже или обратитесь в тех. поддержку."
 
 		common.ApiError(http.StatusInternalServerError, messageError, w)
@@ -124,7 +124,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := json.Marshal(respMap)
 	if err != nil {
-		log.Errorf("save document error: %+v", err)
+		log.Errorf("save saga error: %+v", err)
 		messageError = "Ошибка сервера. Попробуйте позже или обратитесь в тех. поддержку."
 
 		common.ApiError(http.StatusInternalServerError, messageError, w)
@@ -135,7 +135,7 @@ func (h *DocumentHandler) SaveDocument(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write(resp)
 	if err != nil {
-		log.Errorf("save document error: %+v", err)
+		log.Errorf("save saga error: %+v", err)
 		messageError = "Сервер недоступен. Попробуйте позже или обратитесь в тех. поддержку."
 
 		common.ApiError(http.StatusServiceUnavailable, messageError, w)
@@ -249,8 +249,8 @@ func (h *DocumentHandler) GetDocumentsList(w http.ResponseWriter, r *http.Reques
 func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request) {
 	idDoc := r.FormValue("id")
 	if idDoc == "" {
-		err := fmt.Errorf("document id is empty")
-		log.Errorf("get document by id error: %+v", err)
+		err := fmt.Errorf("saga id is empty")
+		log.Errorf("get saga by id error: %+v", err)
 		messageError = "Не передан идентификатор документа."
 
 		common.ApiError(http.StatusBadRequest, messageError, w)
@@ -260,13 +260,13 @@ func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request
 	resp, mime, err := h.uc.GetDocumentById(idDoc)
 	switch {
 	case errors.Is(err, custom_error.ErrDocumentNotFound):
-		log.Errorf("get document by id error: %+v", err)
+		log.Errorf("get saga by id error: %+v", err)
 		messageError = fmt.Sprintf("Документ [%s] не найден.", idDoc)
 
 		common.ApiError(http.StatusNotFound, messageError, w)
 		return
 	case err != nil:
-		log.Errorf("get document by id error: %+v", err)
+		log.Errorf("get saga by id error: %+v", err)
 		messageError = fmt.Sprintf("Ошибка сервера, не удалось получить документ [%s]. Попробуйте позже или обратитесь в тех. поддержку.", idDoc)
 
 		common.ApiError(http.StatusBadRequest, messageError, w)
@@ -281,7 +281,7 @@ func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(resp)
 	if err != nil {
-		log.Errorf("get document by id error: %+v", err)
+		log.Errorf("get saga by id error: %+v", err)
 		messageError = "Сервер недоступен. Попробуйте позже или обратитесь в тех. поддержку."
 
 		common.ApiError(http.StatusServiceUnavailable, messageError, w)
@@ -304,8 +304,8 @@ func (h *DocumentHandler) GetDocumentById(w http.ResponseWriter, r *http.Request
 func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Request) {
 	idDoc := r.FormValue("id")
 	if idDoc == "" {
-		err := fmt.Errorf("document id is empty")
-		log.Errorf("delete document by id error: %+v", err)
+		err := fmt.Errorf("saga id is empty")
+		log.Errorf("delete saga by id error: %+v", err)
 		messageError = "Не передан идентификатор документа."
 
 		common.ApiError(http.StatusBadRequest, messageError, w)
@@ -315,13 +315,13 @@ func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Requ
 	err := h.uc.DeleteDocumentById(idDoc)
 	switch {
 	case errors.Is(err, custom_error.ErrDocumentNotFound):
-		log.Errorf("delete document by id error: %+v", err)
+		log.Errorf("delete saga by id error: %+v", err)
 		messageError = fmt.Sprintf("Документ [%s] не найден.", idDoc)
 
 		common.ApiError(http.StatusNotFound, messageError, w)
 		return
 	case err != nil:
-		log.Errorf("delete document by id error: %+v", err)
+		log.Errorf("delete saga by id error: %+v", err)
 		messageError = fmt.Sprintf("Ошибка сервера, не удалось удалить документ [%s]. Попробуйте позже или обратитесь в тех. поддержку.", idDoc)
 
 		common.ApiError(http.StatusBadRequest, messageError, w)
@@ -336,7 +336,7 @@ func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Requ
 
 	resp, err := json.Marshal(respMap)
 	if err != nil {
-		log.Errorf("delete document by id error: %+v", err)
+		log.Errorf("delete saga by id error: %+v", err)
 		messageError = "Ошибка сервера. Попробуйте позже или обратитесь в тех. поддержку."
 
 		common.ApiError(http.StatusInternalServerError, messageError, w)
@@ -347,7 +347,7 @@ func (h *DocumentHandler) DeleteDocumentById(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(resp)
 	if err != nil {
-		log.Errorf("delete document by id error: %+v", err)
+		log.Errorf("delete saga by id error: %+v", err)
 		messageError = "Сервер недоступен. Попробуйте позже или обратитесь в тех. поддержку."
 
 		common.ApiError(http.StatusServiceUnavailable, messageError, w)

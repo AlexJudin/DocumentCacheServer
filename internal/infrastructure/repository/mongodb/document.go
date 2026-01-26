@@ -14,18 +14,20 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
-type DocumentJsonRepo struct {
+var _ ContentRepository = (*ContentRepo)(nil)
+
+type ContentRepo struct {
 	Client *mongo.Client
 }
 
-func NewDocumentJsonRepo(client *mongo.Client) *DocumentJsonRepo {
-	return &DocumentJsonRepo{
+func NewContentRepository(client *mongo.Client) *ContentRepo {
+	return &ContentRepo{
 		Client: client,
 	}
 }
 
-func (r *DocumentJsonRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
-	log.Infof("saving document [%s] json to database", uuid)
+func (r *ContentRepo) Store(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
+	log.Infof("saving saga [%s] json to database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -35,17 +37,17 @@ func (r *DocumentJsonRepo) Save(ctx context.Context, uuid string, jsonDoc map[st
 
 	_, err := collection.InsertOne(ctx, jsonDoc)
 	if err != nil {
-		log.Debugf("failed to save document json: %+v", err)
-		return fmt.Errorf("failed to save document [%s] json", uuid)
+		log.Debugf("failed to save saga json: %+v", err)
+		return fmt.Errorf("failed to save saga [%s] json", uuid)
 	}
 
-	log.Infof("document [%s] json saved successfully", uuid)
+	log.Infof("saga [%s] json saved successfully", uuid)
 
 	return nil
 }
 
-func (r *DocumentJsonRepo) GetById(ctx context.Context, uuid string) (map[string]interface{}, error) {
-	log.Infof("retrieving document [%s] json from database", uuid)
+func (r *ContentRepo) GetByDocumentId(ctx context.Context, uuid string) (map[string]interface{}, error) {
+	log.Infof("retrieving saga [%s] json from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -58,17 +60,17 @@ func (r *DocumentJsonRepo) GetById(ctx context.Context, uuid string) (map[string
 			return nil, custom_error.ErrDocumentNotFound
 		}
 
-		log.Debugf("failed to retrieve document json: %+v", err)
-		return nil, fmt.Errorf("failed to retrieve document [%s] json", uuid)
+		log.Debugf("failed to retrieve saga json: %+v", err)
+		return nil, fmt.Errorf("failed to retrieve saga [%s] json", uuid)
 	}
 
-	log.Infof("document [%s] json retrieved successfully", uuid)
+	log.Infof("saga [%s] json retrieved successfully", uuid)
 
 	return result, nil
 }
 
-func (r *DocumentJsonRepo) DeleteById(ctx context.Context, uuid string) error {
-	log.Infof("deleting document [%s] json from database", uuid)
+func (r *ContentRepo) DeleteByDocumentId(ctx context.Context, uuid string) error {
+	log.Infof("deleting saga [%s] json from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -76,15 +78,15 @@ func (r *DocumentJsonRepo) DeleteById(ctx context.Context, uuid string) error {
 
 	result, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
 	if err != nil {
-		log.Debugf("failed to delete document json: %+v", err)
-		return fmt.Errorf("failed to delete document [%s] json", uuid)
+		log.Debugf("failed to delete saga json: %+v", err)
+		return fmt.Errorf("failed to delete saga [%s] json", uuid)
 	}
 
 	if result.DeletedCount == 0 {
 		return custom_error.ErrDocumentNotFound
 	}
 
-	log.Infof("document [%s] json deleted successfully", uuid)
+	log.Infof("saga [%s] json deleted successfully", uuid)
 
 	return nil
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/client"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/temporal"
+	"github.com/AlexJudin/DocumentCacheServer/internal/temporal/saga"
 )
 
 func startApp(cfg *config.Config) {
@@ -66,14 +67,16 @@ func startApp(cfg *config.Config) {
 	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
 
 	// init repository
-	documentRepo := repository.NewDocumentRepo(db.DB, mgDb.Client, fileClient)
+	documentRepo := repository.NewDocumentRepository(db.DB, mgDb.Client, fileClient)
 	userRepo := postgres.NewUserRepo(db.DB)
 	tokenRepo := postgres.NewTokenStorageRepo(db.DB)
 
-	runWorkflow(temporalClient, documentRepo)
+	sagaOrchestrator := saga.NewDocumentOrchestrator(documentRepo)
+
+	runWorkflow(temporalClient, documentRepo, sagaOrchestrator)
 
 	r := chi.NewRouter()
-	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, temporalClient, r)
+	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, temporalClient, sagaOrchestrator, r)
 
 	startPprofServer()
 
@@ -129,18 +132,18 @@ func startHTTPServer(cfg *config.Config, r *chi.Mux) {
 	}
 }
 
-func runWorkflow(client tempClient.Client, documentRepo *repository.DocumentRepo) {
+func runWorkflow(client tempClient.Client, documentRepo *repository.DocumentRepo, sagaOrchestrator *saga.DocumentOrchestrator) {
 	w := worker.New(client, temporal.SaveDocument, worker.Options{})
 
-	w.RegisterWorkflow(documentRepo.SaveSagaWorkflow)
-	w.RegisterWorkflow(documentRepo.DeleteSagaWorkflow)
-	w.RegisterActivity(documentRepo.MetaStorage.Save)
-	w.RegisterActivity(documentRepo.MetaStorage.DeleteById)
-	w.RegisterActivity(documentRepo.MetaStorage.GetById)
-	w.RegisterActivity(documentRepo.FileStorage.Upload)
-	w.RegisterActivity(documentRepo.FileStorage.Delete)
-	w.RegisterActivity(documentRepo.JsonStorage.Save)
-	w.RegisterActivity(documentRepo.JsonStorage.DeleteById)
+	w.RegisterWorkflow(sagaOrchestrator.SaveDocument)
+	w.RegisterWorkflow(sagaOrchestrator.DeleteDocument)
+	w.RegisterActivity(documentRepo.MetadataRepo.Save)
+	w.RegisterActivity(documentRepo.MetadataRepo.DeleteById)
+	w.RegisterActivity(documentRepo.MetadataRepo.GetById)
+	w.RegisterActivity(documentRepo.FileRepo.Upload)
+	w.RegisterActivity(documentRepo.FileRepo.Delete)
+	w.RegisterActivity(documentRepo.ContentRepo.Store)
+	w.RegisterActivity(documentRepo.ContentRepo.DeleteByDocumentId)
 
 	err := w.Run(worker.InterruptCh())
 	if err != nil {

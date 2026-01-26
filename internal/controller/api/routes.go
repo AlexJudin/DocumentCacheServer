@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/AlexJudin/DocumentCacheServer/internal/temporal/saga"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -25,12 +26,13 @@ func AddRoutes(cfg *config.Config,
 	tokenRepo *postgres.TokenStorageRepo,
 	cacheRepo *cache.DocumentRepo,
 	temporalClient tempClient.Client,
+	sagaOrchestrator *saga.DocumentOrchestrator,
 	r *chi.Mux) {
 	// init services
 	authService := service.NewAuthService(cfg, tokenRepo)
 
 	// init usecases
-	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo, temporalClient)
+	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo, temporalClient, sagaOrchestrator)
 	docsHandler := document.NewDocumentHandler(docsUC)
 
 	registerUC := usecases.NewRegisterUsecase(userRepo, authService)

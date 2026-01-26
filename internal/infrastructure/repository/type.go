@@ -1,17 +1,13 @@
 package repository
 
 import (
-	"context"
-	
-	"go.temporal.io/sdk/workflow"
-
-	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
-	"github.com/AlexJudin/DocumentCacheServer/internal/model"
+	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/file_storage"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/mongodb"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 )
 
-type Document interface {
-	SaveSagaWorkflow(ctxFlow workflow.Context, document *entity.Document) error
-	GetList(req entity.DocumentListRequest) ([]model.MetaDocument, error)
-	GetById(ctx context.Context, uuid string) ([]byte, string, error)
-	DeleteSagaWorkflow(ctxFlow workflow.Context, uuid string) error
+type DocumentRepository interface {
+	postgres.MetadataRepository
+	mongodb.ContentRepository
+	filestorage.FileRepository
 }

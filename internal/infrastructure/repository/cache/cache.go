@@ -27,7 +27,7 @@ func NewDocumentRepo(cfg *config.Config, redisClient *redis.Client) *DocumentRep
 }
 
 func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interface{}, isFile bool) {
-	log.Infof("setting document [%s] to cache", uuid)
+	log.Infof("setting saga [%s] to cache", uuid)
 
 	var (
 		file       []byte
@@ -53,14 +53,14 @@ func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interfac
 
 		file, err = json.Marshal(result)
 		if err != nil {
-			log.Debugf("failed to marshal document json: %+v", err)
+			log.Debugf("failed to marshal saga json: %+v", err)
 			return
 		}
 	}
 
 	err = r.RedisClient.Set(ctx, "file:data:"+uuid, file, r.Cfg.CacheTTL).Err()
 	if err != nil {
-		log.Debugf("failed to store document data in cache: %+v", err)
+		log.Debugf("failed to store saga data in cache: %+v", err)
 		return
 	}
 
@@ -69,47 +69,47 @@ func (r *DocumentRepo) Set(ctx context.Context, uuid, mime string, data interfac
 
 	err = r.RedisClient.HSet(ctx, "file:meta:"+uuid, metadata).Err()
 	if err != nil {
-		log.Debugf("failed to store document metadata in cache: %+v", err)
+		log.Debugf("failed to store saga metadata in cache: %+v", err)
 		return
 	}
 
-	log.Infof("document [%s] successfully cached", uuid)
+	log.Infof("saga [%s] successfully cached", uuid)
 }
 
 func (r *DocumentRepo) Get(ctx context.Context, uuid string) ([]byte, string, bool) {
-	log.Infof("retrieving document [%s] from cache", uuid)
+	log.Infof("retrieving saga [%s] from cache", uuid)
 
 	file, err := r.RedisClient.Get(ctx, "file:data:"+uuid).Bytes()
 	if err != nil {
-		log.Debugf("failed to retrieve document data from cache: %+v", err)
+		log.Debugf("failed to retrieve saga data from cache: %+v", err)
 		return nil, "", false
 	}
 
 	meta, err := r.RedisClient.HGetAll(ctx, "file:meta:"+uuid).Result()
 	if err != nil {
-		log.Debugf("failed to retrieve document metadata from cache: %+v", err)
+		log.Debugf("failed to retrieve saga metadata from cache: %+v", err)
 		return nil, "", false
 	}
 
 	mime, ok := meta["type"]
 	if !ok {
-		log.Debug("document metadata missing MIME type")
+		log.Debug("saga metadata missing MIME type")
 		return nil, "", false
 	}
 
-	log.Infof("document [%s] successfully retrieved from cache", uuid)
+	log.Infof("saga [%s] successfully retrieved from cache", uuid)
 
 	return file, mime, true
 }
 
 func (r *DocumentRepo) Delete(ctx context.Context, uuid string) {
-	log.Infof("deleting document [%s] from cache", uuid)
+	log.Infof("deleting saga [%s] from cache", uuid)
 
 	err := r.RedisClient.Del(ctx, uuid).Err()
 	if err != nil {
-		log.Debugf("failed to delete document from cache: %+v", err)
+		log.Debugf("failed to delete saga from cache: %+v", err)
 		return
 	}
 
-	log.Infof("document [%s] successfully deleted from cache", uuid)
+	log.Infof("saga [%s] successfully deleted from cache", uuid)
 }
