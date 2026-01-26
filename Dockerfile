@@ -24,6 +24,6 @@ WORKDIR /root/
 
 COPY --from=builder ./app .
 
-EXPOSE 7540
+#EXPOSE 7540
 
 CMD ["./app"]

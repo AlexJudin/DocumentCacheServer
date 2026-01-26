@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"go.temporal.io/sdk/worker"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
 	tempClient "go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/worker"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
@@ -62,20 +62,20 @@ func startApp(cfg *config.Config) {
 		log.Fatal(err)
 	}
 
-	startPprofServer()
+	// init cacheClient
+	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
 
 	// init repository
 	documentRepo := repository.NewDocumentRepo(db.DB, mgDb.Client, fileClient)
 	userRepo := postgres.NewUserRepo(db.DB)
 	tokenRepo := postgres.NewTokenStorageRepo(db.DB)
 
-	// init cacheClient
-	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
-
 	runWorkflow(temporalClient, documentRepo)
 
 	r := chi.NewRouter()
 	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, temporalClient, r)
+
+	startPprofServer()
 
 	startHTTPServer(cfg, r)
 }
