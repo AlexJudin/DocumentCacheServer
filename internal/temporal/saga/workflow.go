@@ -14,10 +14,10 @@ import (
 var _ Orchestrator = (*DocumentOrchestrator)(nil)
 
 type DocumentOrchestrator struct {
-	DocumentRepository repository.DocumentRepository
+	DocumentRepository *repository.DocumentRepo
 }
 
-func NewDocumentOrchestrator(documentRepository repository.DocumentRepository) *DocumentOrchestrator {
+func NewDocumentOrchestrator(documentRepository *repository.DocumentRepo) *DocumentOrchestrator {
 	return &DocumentOrchestrator{
 		DocumentRepository: documentRepository,
 	}

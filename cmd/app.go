@@ -73,7 +73,7 @@ func startApp(cfg *config.Config) {
 
 	sagaOrchestrator := saga.NewDocumentOrchestrator(documentRepo)
 
-	runWorkflow(temporalClient, documentRepo, sagaOrchestrator)
+	go runWorkflow(temporalClient, documentRepo, sagaOrchestrator)
 
 	r := chi.NewRouter()
 	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, temporalClient, sagaOrchestrator, r)
@@ -137,13 +137,13 @@ func runWorkflow(client tempClient.Client, documentRepo *repository.DocumentRepo
 
 	w.RegisterWorkflow(sagaOrchestrator.SaveDocument)
 	w.RegisterWorkflow(sagaOrchestrator.DeleteDocument)
-	w.RegisterActivity(documentRepo.MetadataRepo.Save)
-	w.RegisterActivity(documentRepo.MetadataRepo.DeleteById)
-	w.RegisterActivity(documentRepo.MetadataRepo.GetById)
-	w.RegisterActivity(documentRepo.FileRepo.Upload)
-	w.RegisterActivity(documentRepo.FileRepo.Delete)
-	w.RegisterActivity(documentRepo.ContentRepo.Store)
-	w.RegisterActivity(documentRepo.ContentRepo.DeleteByDocumentId)
+	w.RegisterActivity(documentRepo.Save)
+	w.RegisterActivity(documentRepo.DeleteById)
+	w.RegisterActivity(documentRepo.GetById)
+	w.RegisterActivity(documentRepo.Upload)
+	w.RegisterActivity(documentRepo.Delete)
+	w.RegisterActivity(documentRepo.Store)
+	w.RegisterActivity(documentRepo.DeleteByDocumentId)
 
 	err := w.Run(worker.InterruptCh())
 	if err != nil {

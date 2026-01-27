@@ -8,7 +8,7 @@ services:
       args:
          VERSION: ${VERSION}
     ports:
-      - "${PORT_APP_1}:7540"
+      - "${PORT}:7540"
     depends_on:
       postgres:
         condition: service_started
@@ -32,7 +32,7 @@ services:
       args:
         VERSION: ${VERSION}
     ports:
-      - "${PORT_APP_2}:7541"
+      - "${PORT}:7541"
     depends_on:
       postgres:
         condition: service_started
@@ -67,8 +67,8 @@ services:
       - POSTGRES_DB=${DB_NAME}
     ports:
       - "${DB_PORT}:5432"
-    volumes:
-      - ./data/postgresql:/var/lib/postgresql/data
+    #volumes:
+    #  - ./data/postgresql:/var/lib/postgresql/data
     networks:
       - doc_serv_network
 
