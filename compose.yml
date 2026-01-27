@@ -1,6 +1,6 @@
 services:
-  app1:
-    container_name: app-1
+  app:
+    container_name: app
     env_file:
       - .env
     build:
@@ -23,38 +23,13 @@ services:
     networks:
       - doc_serv_network
 
-  app2:
-    container_name: app-2
-    env_file:
-      - .env
-    build:
-      context: .
-      args:
-        VERSION: ${VERSION}
-    ports:
-      - "${PORT}:7541"
-    depends_on:
-      postgres:
-        condition: service_started
-      temporal:
-        condition: service_started
-      redis:
-        condition: service_started
-      mongodb:
-        condition: service_started
-      minio:
-        condition: service_started
-    networks:
-      - doc_serv_network
-
   nginx:
     build: ./nginx
     container_name: nginx
     ports:
       - 80:80
     depends_on:
-      - app1
-      - app2
+      - app
     networks:
       - doc_serv_network
 
@@ -67,8 +42,8 @@ services:
       - POSTGRES_DB=${DB_NAME}
     ports:
       - "${DB_PORT}:5432"
-    #volumes:
-    #  - ./data/postgresql:/var/lib/postgresql/data
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
     networks:
       - doc_serv_network
 
