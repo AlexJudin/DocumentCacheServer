@@ -1,12 +1,10 @@
 package api
 
 import (
-	"github.com/AlexJudin/DocumentCacheServer/internal/temporal/saga"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
-	tempClient "go.temporal.io/sdk/client"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/auth"
@@ -16,6 +14,7 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/saga"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
@@ -25,14 +24,13 @@ func AddRoutes(cfg *config.Config,
 	userRepo *postgres.UserRepo,
 	tokenRepo *postgres.TokenStorageRepo,
 	cacheRepo *cache.DocumentRepo,
-	temporalClient tempClient.Client,
 	sagaOrchestrator *saga.DocumentOrchestrator,
 	r *chi.Mux) {
 	// init services
 	authService := service.NewAuthService(cfg, tokenRepo)
 
 	// init usecases
-	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo, temporalClient, sagaOrchestrator)
+	docsUC := usecases.NewDocumentUsecase(documentRepo, cacheRepo, sagaOrchestrator)
 	docsHandler := document.NewDocumentHandler(docsUC)
 
 	registerUC := usecases.NewRegisterUsecase(userRepo, authService)

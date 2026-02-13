@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	tempClient "go.temporal.io/sdk/client"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/saga"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
-	"github.com/AlexJudin/DocumentCacheServer/internal/temporal"
-	"github.com/AlexJudin/DocumentCacheServer/internal/temporal/saga"
 )
 
 var _ Document = (*DocumentUsecase)(nil)
@@ -21,16 +19,14 @@ type DocumentUsecase struct {
 	Ctx                context.Context
 	DocumentRepository repository.DocumentRepository
 	Cache              cache.Document
-	temporalClient     tempClient.Client
 	sagaOrchestrator   saga.Orchestrator
 }
 
-func NewDocumentUsecase(docRepo repository.DocumentRepository, cache cache.Document, temporalClient tempClient.Client, sagaOrchestrator *saga.DocumentOrchestrator) *DocumentUsecase {
+func NewDocumentUsecase(docRepo repository.DocumentRepository, cache cache.Document, sagaOrchestrator *saga.DocumentOrchestrator) *DocumentUsecase {
 	return &DocumentUsecase{
 		Ctx:                context.Background(),
 		DocumentRepository: docRepo,
 		Cache:              cache,
-		temporalClient:     temporalClient,
 		sagaOrchestrator:   sagaOrchestrator,
 	}
 }
@@ -40,8 +36,7 @@ func (t *DocumentUsecase) SaveDocument(document *entity.Document) error {
 
 	document.Meta.UUID = uuidDoc
 
-	opts := tempClient.StartWorkflowOptions{TaskQueue: temporal.SaveDocument}
-	_, err := t.temporalClient.ExecuteWorkflow(t.Ctx, opts, t.sagaOrchestrator.SaveDocument, document)
+	err := t.sagaOrchestrator.SaveDocument(t.Ctx, document)
 	if err != nil {
 		return err
 	}
@@ -99,8 +94,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 }
 
 func (t *DocumentUsecase) DeleteDocumentById(uuid string) error {
-	opts := tempClient.StartWorkflowOptions{TaskQueue: temporal.SaveDocument}
-	_, err := t.temporalClient.ExecuteWorkflow(t.Ctx, opts, t.sagaOrchestrator.DeleteDocument, uuid)
+	err := t.sagaOrchestrator.DeleteDocument(t.Ctx, uuid)
 	if err != nil {
 		return err
 	}

@@ -12,8 +12,6 @@ services:
     depends_on:
       postgres:
         condition: service_started
-      temporal:
-        condition: service_started
       redis:
         condition: service_started
       mongodb:
@@ -42,27 +40,8 @@ services:
       - POSTGRES_DB=${DB_NAME}
     ports:
       - "${DB_PORT}:5432"
-    volumes:
-      - ./data/postgresql:/var/lib/postgresql/data
-    networks:
-      - doc_serv_network
-
-  temporal:
-    container_name: temporal
-    image: temporalio/auto-setup:1.22
-    ports:
-      - "${TEMPORAL_PORT}:7233"
-    volumes:
-      - ./config/temporal.yml:/etc/temporal/config/development_es.yaml:z
-    environment:
-      - DB=postgresql
-      - DB_PORT=${DB_PORT}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PWD=${DB_PASSWORD}
-      - POSTGRES_SEEDS=${DB_HOST}
-    depends_on:
-      postgres:
-        condition: service_started
+    #volumes:
+    #  - ./data/postgresql:/var/lib/postgresql/data
     networks:
       - doc_serv_network
 

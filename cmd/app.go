@@ -12,8 +12,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
-	tempClient "go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/worker"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
@@ -21,8 +19,7 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/client"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
-	"github.com/AlexJudin/DocumentCacheServer/internal/temporal"
-	"github.com/AlexJudin/DocumentCacheServer/internal/temporal/saga"
+	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/saga"
 )
 
 func startApp(cfg *config.Config) {
@@ -37,13 +34,6 @@ func startApp(cfg *config.Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	tempConStr := cfg.GetTemporalSource()
-	temporalClient, err := temporal.NewTemporalClient(tempConStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer temporalClient.Close()
 
 	connMgDbStr := cfg.GetMongoDBSourse()
 	mgDb, err := client.NewMongoDBClient(connMgDbStr)
@@ -73,10 +63,8 @@ func startApp(cfg *config.Config) {
 
 	sagaOrchestrator := saga.NewDocumentOrchestrator(documentRepo)
 
-	runWorkflow(temporalClient, documentRepo, sagaOrchestrator)
-
 	r := chi.NewRouter()
-	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, temporalClient, sagaOrchestrator, r)
+	api.AddRoutes(cfg, documentRepo, userRepo, tokenRepo, cacheRepo, sagaOrchestrator, r)
 
 	startPprofServer()
 
@@ -129,24 +117,5 @@ func startHTTPServer(cfg *config.Config, r *chi.Mux) {
 		log.Info("The server has been stopped successfully")
 	case err = <-serverErr:
 		log.Errorf("Server error: %+v", err)
-	}
-}
-
-func runWorkflow(client tempClient.Client, documentRepo *repository.DocumentRepo, sagaOrchestrator *saga.DocumentOrchestrator) {
-	w := worker.New(client, temporal.SaveDocument, worker.Options{})
-
-	w.RegisterWorkflow(sagaOrchestrator.SaveDocument)
-	w.RegisterWorkflow(sagaOrchestrator.DeleteDocument)
-	w.RegisterActivity(documentRepo.Save)
-	w.RegisterActivity(documentRepo.DeleteById)
-	w.RegisterActivity(documentRepo.GetById)
-	w.RegisterActivity(documentRepo.Upload)
-	w.RegisterActivity(documentRepo.Delete)
-	w.RegisterActivity(documentRepo.Store)
-	w.RegisterActivity(documentRepo.DeleteByDocumentId)
-
-	err := w.Run(nil)
-	if err != nil {
-		log.Fatal(err)
 	}
 }
