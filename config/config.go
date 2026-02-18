@@ -21,7 +21,6 @@ type Config struct {
 	Port     string
 	LogLevel log.Level
 	*ConfigDB
-	*ConfigTemporal
 	*ConfigMongoDB
 	*ConfigAuth
 	*ConfigRedis
@@ -36,11 +35,6 @@ type ConfigDB struct {
 	Password string
 	DBName   string
 	Sslmode  string
-}
-
-type ConfigTemporal struct {
-	Host string
-	Port string
 }
 
 type ConfigMongoDB struct {
@@ -101,12 +95,6 @@ func New() (*Config, error) {
 	}
 	cfg.ConfigDB = &dbCfg
 
-	temporalCfg := ConfigTemporal{
-		Host: os.Getenv("TEMPORAL_HOST"),
-		Port: os.Getenv("TEMPORAL_PORT"),
-	}
-	cfg.ConfigTemporal = &temporalCfg
-
 	mgDbCfg := ConfigMongoDB{
 		Host: os.Getenv("MGDB_HOST"),
 		Port: os.Getenv("MGDB_PORT"),
@@ -165,10 +153,6 @@ func (c *Config) GetDataSourceName() string {
 		c.ConfigDB.Host, c.ConfigDB.Port, c.ConfigDB.User, c.ConfigDB.Password, c.ConfigDB.DBName)
 
 	return str
-}
-
-func (c *Config) GetTemporalSource() string {
-	return fmt.Sprintf("%s:%s", c.ConfigTemporal.Host, c.ConfigTemporal.Port)
 }
 
 func (c *Config) GetMongoDBSourse() string {
