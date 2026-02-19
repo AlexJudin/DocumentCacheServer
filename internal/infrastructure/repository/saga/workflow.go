@@ -103,7 +103,7 @@ func (s *DocumentOrchestrator) DeleteDocument(ctx context.Context, uuid string) 
 		return nil
 	}
 
-	if err = s.DocumentRepository.DeleteByDocumentId(ctx, uuid); err != nil {
+	if err = s.DocumentRepository.DeleteById(ctx, uuid); err != nil {
 		log.Error("failed to delete JSON data", "uuid", uuid, "error", err)
 
 		if compErr := s.DocumentRepository.Save(&metaDoc); compErr != nil {

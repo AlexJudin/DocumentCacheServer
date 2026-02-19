@@ -10,7 +10,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type MetricsHTTP struct {
+const httpServerRequestsSecondsCount = "http_server_requests_seconds_count"
+
+type HTTPMetrics struct {
 	requestDuration *prometheus.HistogramVec
 }
 
@@ -25,12 +27,12 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-func NewMetricsHTTP() *MetricsHTTP {
-	return &MetricsHTTP{
+func NewHTTPMetrics() *HTTPMetrics {
+	return &HTTPMetrics{
 		// Гистограмма длительности запросов
 		requestDuration: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
-				Name:    "http_server_requests_seconds_count",
+				Name:    httpServerRequestsSecondsCount,
 				Help:    "Duration of HTTP requests in seconds",
 				Buckets: prometheus.DefBuckets,
 			},
@@ -39,7 +41,7 @@ func NewMetricsHTTP() *MetricsHTTP {
 	}
 }
 
-func (m *MetricsHTTP) MetricsMiddleware(next http.Handler) http.Handler {
+func (m *HTTPMetrics) HTTPMetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Замеряем время начала
 		start := time.Now()

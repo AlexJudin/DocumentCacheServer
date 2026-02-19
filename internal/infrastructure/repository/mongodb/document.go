@@ -11,23 +11,34 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
+	"github.com/AlexJudin/DocumentCacheServer/internal/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
+)
+
+const (
+	dataBaseType = "mongodb"
+
+	saveDocumentContent       = "save_document_content"
+	getDocumentContentById    = "get_document_content_by_id"
+	deleteDocumentContentById = "delete_document_content_by_id"
 )
 
 var _ ContentRepository = (*ContentRepo)(nil)
 
 type ContentRepo struct {
-	Client *mongo.Client
+	Client       *mongo.Client
+	QueryObserve metric.QueryObserver
 }
 
 func NewContentRepository(client *mongo.Client) *ContentRepo {
 	return &ContentRepo{
-		Client: client,
+		Client:       client,
+		QueryObserve: metric.NewDatabaseMetrics(),
 	}
 }
 
-func (r *ContentRepo) Store(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
-	log.Infof("saving saga [%s] json to database", uuid)
+func (r *ContentRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
+	log.Infof("saving document [%s] content", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -35,58 +46,86 @@ func (r *ContentRepo) Store(ctx context.Context, uuid string, jsonDoc map[string
 
 	jsonDoc["_id"] = uuid
 
-	_, err := collection.InsertOne(ctx, jsonDoc)
-	if err != nil {
-		log.Debugf("failed to save saga json: %+v", err)
-		return fmt.Errorf("failed to save saga [%s] json", uuid)
+	fn := func() error {
+		_, err := collection.InsertOne(ctx, jsonDoc)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	log.Infof("saga [%s] json saved successfully", uuid)
+	err := r.QueryObserve.Observe(fn, dataBaseType, saveDocumentContent)
+	if err != nil {
+		log.Debugf("failed to save document content: %+v", err)
+		return fmt.Errorf("failed to save document [%s] content", uuid)
+	}
+
+	log.Infof("document [%s] content saved successfully", uuid)
 
 	return nil
 }
 
-func (r *ContentRepo) GetByDocumentId(ctx context.Context, uuid string) (map[string]interface{}, error) {
-	log.Infof("retrieving saga [%s] json from database", uuid)
+func (r *ContentRepo) GetById(ctx context.Context, uuid string) (map[string]interface{}, error) {
+	log.Infof("retrieving document [%s] content from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var result map[string]interface{}
-	err := collection.FindOne(ctx, bson.M{"_id": uuid}).Decode(&result)
+
+	fn := func() error {
+		err := collection.FindOne(ctx, bson.M{"_id": uuid}).Decode(&result)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	err := r.QueryObserve.Observe(fn, dataBaseType, getDocumentContentById)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, custom_error.ErrDocumentNotFound
 		}
 
-		log.Debugf("failed to retrieve saga json: %+v", err)
-		return nil, fmt.Errorf("failed to retrieve saga [%s] json", uuid)
+		log.Debugf("failed to retrieve document content: %+v", err)
+		return nil, fmt.Errorf("failed to retrieve document [%s] content", uuid)
 	}
 
-	log.Infof("saga [%s] json retrieved successfully", uuid)
+	log.Infof("document [%s] content retrieved successfully", uuid)
 
 	return result, nil
 }
 
-func (r *ContentRepo) DeleteByDocumentId(ctx context.Context, uuid string) error {
-	log.Infof("deleting saga [%s] json from database", uuid)
+func (r *ContentRepo) DeleteById(ctx context.Context, uuid string) error {
+	log.Infof("deleting document [%s] content from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
+	fn := func() error {
+		result, err := collection.DeleteOne(ctx, bson.M{"_id": uuid})
+		if err != nil {
+			return fmt.Errorf("failed to delete document [%s] content", uuid)
+		}
+
+		if result.DeletedCount == 0 {
+			return custom_error.ErrDocumentNotFound
+		}
+
+		return nil
+	}
+
+	err := r.QueryObserve.Observe(fn, dataBaseType, deleteDocumentContentById)
 	if err != nil {
-		log.Debugf("failed to delete saga json: %+v", err)
-		return fmt.Errorf("failed to delete saga [%s] json", uuid)
+		log.Debugf("failed to delete document content: %+v", err)
+		return err
 	}
 
-	if result.DeletedCount == 0 {
-		return custom_error.ErrDocumentNotFound
-	}
-
-	log.Infof("saga [%s] json deleted successfully", uuid)
+	log.Infof("document [%s] content deleted successfully", uuid)
 
 	return nil
 }

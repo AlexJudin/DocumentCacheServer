@@ -76,7 +76,7 @@ func (t *DocumentUsecase) GetDocumentById(uuid string) ([]byte, string, error) {
 		return file, metaDoc.Mime, nil
 	}
 
-	jsonDocMap, err := t.DocumentRepository.GetByDocumentId(t.Ctx, uuid)
+	jsonDocMap, err := t.DocumentRepository.GetById(t.Ctx, uuid)
 	if err != nil {
 		return nil, entity.DefaultMimeType, err
 	}

@@ -52,9 +52,9 @@ func AddRoutes(cfg *config.Config,
 	timeoutMiddleware := middleware.NewTimeoutMiddleware(time.Second)
 
 	// init metrics middleware
-	metricsMiddleware := middleware.NewMetricsHTTP()
+	metricsMiddleware := middleware.NewHTTPMetrics()
 
-	r.Use(metricsMiddleware.MetricsMiddleware)
+	r.Use(metricsMiddleware.HTTPMetricsMiddleware)
 	r.Post("/api/register", registerHandler.RegisterUser)
 	r.Post("/api/auth", authHandler.AuthorizationUser)
 	r.Post("/api/refresh-token", authHandler.RefreshToken)

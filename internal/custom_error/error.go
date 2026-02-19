@@ -12,5 +12,5 @@ var (
 	ErrInvalidLogin      = errors.New("invalid login")
 	ErrInvalidPassword   = errors.New("invalid password")
 
-	ErrDocumentNotFound = errors.New("saga not found")
+	ErrDocumentNotFound = errors.New("document not found")
 )

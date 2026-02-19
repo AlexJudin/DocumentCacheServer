@@ -9,29 +9,52 @@ import (
 
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
+	"github.com/AlexJudin/DocumentCacheServer/internal/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
+)
+
+const (
+	dataBaseType = "postgres"
+
+	saveDocumentMetaData       = "save_document_meta_data"
+	getListDocumentMetaData    = "get_list_document_meta_data"
+	getDocumentMetaDataById    = "get_document_meta_data_by_id"
+	deleteDocumentMetaDataById = "delete_document_meta_data_by_id"
 )
 
 var _ MetadataRepository = (*MetadataRepo)(nil)
 
 type MetadataRepo struct {
-	Db *gorm.DB
+	Db           *gorm.DB
+	QueryObserve metric.QueryObserver
 }
 
 func NewMetadataRepository(db *gorm.DB) *MetadataRepo {
-	return &MetadataRepo{Db: db}
+	return &MetadataRepo{
+		Db:           db,
+		QueryObserve: metric.NewDatabaseMetrics(),
+	}
 }
 
 func (r *MetadataRepo) Save(document *model.MetaDocument) error {
-	log.Infof("saving saga [%s] metadata to database", document.UUID)
+	log.Infof("saving document [%s] metadata to database", document.UUID)
 
-	err := r.Db.Create(&document).Error
-	if err != nil {
-		log.Debugf("failed to save saga metadata: %+v", err)
-		return fmt.Errorf("failed to save saga [%s] metadata", document.UUID)
+	fn := func() error {
+		err := r.Db.Create(&document).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
-	log.Infof("saga [%s] metadata saved successfully", document.UUID)
+	err := r.QueryObserve.Observe(fn, dataBaseType, saveDocumentMetaData)
+	if err != nil {
+		log.Debugf("failed to save document metadata: %+v", err)
+		return fmt.Errorf("failed to save document [%s] metadata", document.UUID)
+	}
+
+	log.Infof("document [%s] metadata saved successfully", document.UUID)
 
 	return nil
 }
@@ -41,14 +64,23 @@ func (r *MetadataRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocu
 
 	documents := make([]model.MetaDocument, req.Limit)
 
-	err := r.Db.Model(&model.MetaDocument{}).
-		Where(fmt.Sprintf("%s = ?", req.Key), req.Value).
-		Where("? = ANY(meta_documents.grant)", req.Login).
-		Limit(req.Limit).
-		Offset(req.Offset).
-		Find(&documents).
-		Order("name asc").
-		Order("created_at desc").Error
+	fn := func() error {
+		err := r.Db.Model(&model.MetaDocument{}).
+			Where(fmt.Sprintf("%s = ?", req.Key), req.Value).
+			Where("? = ANY(meta_documents.grant)", req.Login).
+			Limit(req.Limit).
+			Offset(req.Offset).
+			Find(&documents).
+			Order("name asc").
+			Order("created_at desc").Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	err := r.QueryObserve.Observe(fn, dataBaseType, getListDocumentMetaData)
 	if err != nil {
 		log.Debugf("failed to retrieve documents list: %+v", err)
 		return nil, fmt.Errorf("failed to retrieve documents list")
@@ -60,45 +92,63 @@ func (r *MetadataRepo) GetList(req entity.DocumentListRequest) ([]model.MetaDocu
 }
 
 func (r *MetadataRepo) GetById(uuid string) (model.MetaDocument, error) {
-	log.Infof("retrieving saga [%s] metadata", uuid)
+	log.Infof("retrieving document [%s] metadata", uuid)
 
 	var document model.MetaDocument
 
-	err := r.Db.Model(&document).
-		Where("uuid = ?", uuid).
-		First(&document).Error
+	fn := func() error {
+		err := r.Db.Model(&document).
+			Where("uuid = ?", uuid).
+			First(&document).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	err := r.QueryObserve.Observe(fn, dataBaseType, getDocumentMetaDataById)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Infof("saga [%s] metadata not found", uuid)
+			log.Infof("document [%s] metadata not found", uuid)
 			return document, custom_error.ErrDocumentNotFound
 		}
 
-		log.Debugf("failed to retrieve saga: %+v", err)
-		return document, fmt.Errorf("failed to retrieve saga [%s] metadata", uuid)
+		log.Debugf("failed to retrieve document: %+v", err)
+		return document, fmt.Errorf("failed to retrieve document [%s] metadata", uuid)
 	}
 
-	log.Infof("saga [%s] metadata retrieved successfully", uuid)
+	log.Infof("document [%s] metadata retrieved successfully", uuid)
 
 	return document, nil
 }
 
 func (r *MetadataRepo) DeleteById(id string) error {
-	log.Infof("deleting saga [%s] metadata", id)
+	log.Infof("deleting document [%s] metadata", id)
 
-	err := r.Db.Model(&model.MetaDocument{}).
-		Where("uuid = ?", id).
-		Delete(&model.MetaDocument{}).Error
+	fn := func() error {
+		err := r.Db.Model(&model.MetaDocument{}).
+			Where("uuid = ?", id).
+			Delete(&model.MetaDocument{}).Error
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	err := r.QueryObserve.Observe(fn, dataBaseType, deleteDocumentMetaDataById)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Infof("saga [%s] metadata not found", id)
+			log.Infof("document [%s] metadata not found", id)
 			return custom_error.ErrDocumentNotFound
 		}
 
-		log.Debugf("failed to delete saga metadata: %+v", err)
-		return fmt.Errorf("failed to delete saga [%s] metadata", id)
+		log.Debugf("failed to delete document metadata: %+v", err)
+		return fmt.Errorf("failed to delete document [%s] metadata", id)
 	}
 
-	log.Infof("saga [%s] metadata deleted successfully", id)
+	log.Infof("document [%s] metadata deleted successfully", id)
 
 	return nil
 }

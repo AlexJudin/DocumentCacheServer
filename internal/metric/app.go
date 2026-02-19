@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+const applicationInfo = "application_info"
+
 type AppMetrics struct {
 	info *prometheus.GaugeVec
 }
@@ -16,7 +18,7 @@ type AppMetrics struct {
 func NewAppMetrics() *AppMetrics {
 	info := promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "application_info",
+			Name: applicationInfo,
 			Help: "Information about the application version, commit hash and build date",
 		},
 		[]string{"version", "commit", "date_build"},
