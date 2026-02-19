@@ -30,7 +30,7 @@ func startApp(cfg *config.Config) {
 	}
 	defer db.Close()
 
-	err = db.AutoMigrate()
+	err = db.Migrate()
 	if err != nil {
 		log.Fatal(err)
 	}

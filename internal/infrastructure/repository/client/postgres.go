@@ -2,12 +2,11 @@ package client
 
 import (
 	"database/sql"
+	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
 type Database struct {

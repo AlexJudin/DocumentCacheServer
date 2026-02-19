@@ -19,5 +19,5 @@ type MetaDocument struct {
 	File      bool           `json:"file"`
 	Public    bool           `json:"public"`
 	Mime      string         `json:"mime"`
-	Grant     pq.StringArray `gorm:"type:text[], index" json:"grant"`
+	Grant     pq.StringArray `gorm:"type:text[]" json:"grant"`
 }

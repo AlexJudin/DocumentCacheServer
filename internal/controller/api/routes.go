@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/httprate"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api/auth"
@@ -15,6 +16,7 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/saga"
+	"github.com/AlexJudin/DocumentCacheServer/internal/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
@@ -39,12 +41,20 @@ func AddRoutes(cfg *config.Config,
 	authUC := usecases.NewAuthUsecase(userRepo, authService)
 	authHandler := auth.NewAuthHandler(authUC)
 
+	// init metrics
+	appMetrics := metric.NewAppMetrics()
+	_ = appMetrics
+
 	// init auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 
-	//init timeout middleware
+	// init timeout middleware
 	timeoutMiddleware := middleware.NewTimeoutMiddleware(time.Second)
 
+	// init metrics middleware
+	metricsMiddleware := middleware.NewMetricsHTTP()
+
+	r.Use(metricsMiddleware.MetricsMiddleware)
 	r.Post("/api/register", registerHandler.RegisterUser)
 	r.Post("/api/auth", authHandler.AuthorizationUser)
 	r.Post("/api/refresh-token", authHandler.RefreshToken)
@@ -66,4 +76,6 @@ func AddRoutes(cfg *config.Config,
 
 		r.Delete("/api/docs/", docsHandler.DeleteDocumentById)
 	})
+
+	r.Handle("/api/metrics", promhttp.Handler())
 }
