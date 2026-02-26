@@ -16,7 +16,6 @@ import (
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/saga"
-	"github.com/AlexJudin/DocumentCacheServer/internal/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/service"
 	"github.com/AlexJudin/DocumentCacheServer/internal/usecases"
 )
@@ -40,10 +39,6 @@ func AddRoutes(cfg *config.Config,
 
 	authUC := usecases.NewAuthUsecase(userRepo, authService)
 	authHandler := auth.NewAuthHandler(authUC)
-
-	// init metrics
-	appMetrics := metric.NewAppMetrics()
-	_ = appMetrics
 
 	// init auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)

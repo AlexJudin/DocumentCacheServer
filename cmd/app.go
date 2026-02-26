@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/AlexJudin/DocumentCacheServer/config"
+	"github.com/AlexJudin/DocumentCacheServer/internal/app/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/controller/api"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/cache"
@@ -56,8 +57,14 @@ func startApp(cfg *config.Config) {
 	// init cacheClient
 	cacheRepo := cache.NewDocumentRepo(cfg, cacheManager)
 
+	// init metrics
+	appMetrics := metric.NewAppMetrics()
+	_ = appMetrics
+
+	repoMetrics := metric.NewDatabaseMetrics()
+
 	// init repository
-	documentRepo := repository.NewDocumentRepository(db.DB, mgDb.Client, fileClient)
+	documentRepo := repository.NewDocumentRepository(db.DB, mgDb.Client, fileClient, repoMetrics)
 	userRepo := postgres.NewUserRepo(db.DB)
 	tokenRepo := postgres.NewTokenStorageRepo(db.DB)
 

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/AlexJudin/DocumentCacheServer/internal/app/metric"
 	"gorm.io/gorm"
 
 	"github.com/minio/minio-go/v7"
@@ -17,10 +18,10 @@ type DocumentRepo struct {
 	*filestorage.FileRepo
 }
 
-func NewDocumentRepository(db *gorm.DB, mongoClient *mongo.Client, minioClient *minio.Client) *DocumentRepo {
+func NewDocumentRepository(db *gorm.DB, mongoClient *mongo.Client, minioClient *minio.Client, metrics *metric.DatabaseMetrics) *DocumentRepo {
 	return &DocumentRepo{
-		MetadataRepo: postgres.NewMetadataRepository(db),
-		ContentRepo:  mongodb.NewContentRepository(mongoClient),
+		MetadataRepo: postgres.NewMetadataRepository(db, metrics),
+		ContentRepo:  mongodb.NewContentRepository(mongoClient, metrics),
 		FileRepo:     filestorage.NewFileRepository(minioClient),
 	}
 }

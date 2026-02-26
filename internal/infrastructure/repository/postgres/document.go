@@ -7,9 +7,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/AlexJudin/DocumentCacheServer/internal/app/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
 	"github.com/AlexJudin/DocumentCacheServer/internal/entity"
-	"github.com/AlexJudin/DocumentCacheServer/internal/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
@@ -29,10 +29,10 @@ type MetadataRepo struct {
 	QueryObserve metric.QueryObserver
 }
 
-func NewMetadataRepository(db *gorm.DB) *MetadataRepo {
+func NewMetadataRepository(db *gorm.DB, metrics *metric.DatabaseMetrics) *MetadataRepo {
 	return &MetadataRepo{
 		Db:           db,
-		QueryObserve: metric.NewDatabaseMetrics(),
+		QueryObserve: metrics,
 	}
 }
 

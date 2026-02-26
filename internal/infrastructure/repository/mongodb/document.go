@@ -10,8 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/AlexJudin/DocumentCacheServer/internal/app/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/custom_error"
-	"github.com/AlexJudin/DocumentCacheServer/internal/metric"
 	"github.com/AlexJudin/DocumentCacheServer/internal/model"
 )
 
@@ -30,14 +30,14 @@ type ContentRepo struct {
 	QueryObserve metric.QueryObserver
 }
 
-func NewContentRepository(client *mongo.Client) *ContentRepo {
+func NewContentRepository(client *mongo.Client, metrics *metric.DatabaseMetrics) *ContentRepo {
 	return &ContentRepo{
 		Client:       client,
-		QueryObserve: metric.NewDatabaseMetrics(),
+		QueryObserve: metrics,
 	}
 }
 
-func (r *ContentRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
+func (r *ContentRepo) Store(ctx context.Context, uuid string, jsonDoc map[string]interface{}) error {
 	log.Infof("saving document [%s] content", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
@@ -66,7 +66,7 @@ func (r *ContentRepo) Save(ctx context.Context, uuid string, jsonDoc map[string]
 	return nil
 }
 
-func (r *ContentRepo) GetById(ctx context.Context, uuid string) (map[string]interface{}, error) {
+func (r *ContentRepo) GetByDocumentId(ctx context.Context, uuid string) (map[string]interface{}, error) {
 	log.Infof("retrieving document [%s] content from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
@@ -99,7 +99,7 @@ func (r *ContentRepo) GetById(ctx context.Context, uuid string) (map[string]inte
 	return result, nil
 }
 
-func (r *ContentRepo) DeleteById(ctx context.Context, uuid string) error {
+func (r *ContentRepo) DeleteByDocumentId(ctx context.Context, uuid string) error {
 	log.Infof("deleting document [%s] content from database", uuid)
 
 	collection := r.Client.Database(model.MongoDbName).Collection(model.MongoCollectionName)
