@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"github.com/AlexJudin/DocumentCacheServer/internal/app/metric"
 	"gorm.io/gorm"
 
 	"github.com/minio/minio-go/v7"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/AlexJudin/DocumentCacheServer/internal/app/metric"
 	filestorage "github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/file_storage"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/mongodb"
 	"github.com/AlexJudin/DocumentCacheServer/internal/infrastructure/repository/postgres"

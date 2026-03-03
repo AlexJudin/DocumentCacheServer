@@ -29,7 +29,6 @@ func (rw *responseWriter) WriteHeader(code int) {
 
 func NewHTTPMetrics() *HTTPMetrics {
 	return &HTTPMetrics{
-		// Гистограмма длительности запросов
 		requestDuration: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    httpServerRequestsSecondsCount,
@@ -43,31 +42,23 @@ func NewHTTPMetrics() *HTTPMetrics {
 
 func (m *HTTPMetrics) HTTPMetricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Замеряем время начала
 		start := time.Now()
 
-		// Создаем обертку для ResponseWriter, чтобы перехватить статус и размер
 		wrapper := &responseWriter{
 			ResponseWriter: w,
 			statusCode:     http.StatusOK,
 		}
 
-		// Обрабатываем запрос
 		next.ServeHTTP(wrapper, r)
 
-		// Вычисляем длительность
 		duration := time.Since(start).Seconds()
 
-		// Получаем путь запроса
 		path := r.URL.Path
 
-		// Записываем метрики
 		statusStr := strconv.Itoa(wrapper.statusCode)
 
-		// Длительность запроса
 		m.requestDuration.WithLabelValues(r.Method, path, statusStr).Observe(duration)
 
-		// Логирование для отладки
 		log.Printf("Method: %s, URI: %s, Status: %d, Duration: %f",
 			r.Method, path, wrapper.statusCode, duration)
 	})
